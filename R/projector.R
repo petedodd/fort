@@ -123,6 +123,7 @@ projections <- function(year,
   names(RM) <- c('year','M.mid','M.sd','M.lo','M.hi')
   ## fraction HIV+
   if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
+    cat('Running HIV component...\n')
     suppressWarnings({RH <- noisyex(year,arguments$Hhat,arguments$sEH,nrep,runs=FALSE,2)})
     names(RH) <- c('year','H.mid','H.sd','H.lo','H.hi')
   } else { #HIV not given

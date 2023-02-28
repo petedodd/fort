@@ -17,7 +17,6 @@ lgtparz <- function(mn,S){ #get logit normal parms
   notNA <- !is.na(mn+S)
   U <- pmin(mn[notNA]+1.0*S[notNA],1)
   L <- pmax(mn[notNA]-1.0*S[notNA],0)
-  print(U);print(L)
   A[notNA,] <- logitnorm::twCoefLogitnormCi(lower=L,upper=U,perc = 0.6827) #w/i +/- SD
   A[!notNA,] <- rep(NA_real_,2)
   list(mu=A[,1],sdlog=A[,2])
