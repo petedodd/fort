@@ -4,7 +4,7 @@
 \alias{projections}
 \title{projections}
 \usage{
-projections(year, Ihat, sEI, Nhat, sEN, Mhat, sEM, Phat, sEP, nrep = 500)
+projections(year, Ihat, sEI, Nhat, sEN, Mhat, sEM, Phat, sEP, ..., nrep = 500)
 }
 \arguments{
 \item{year}{vector of years for which there is data or an estimate is required}

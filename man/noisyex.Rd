@@ -4,7 +4,7 @@
 \alias{noisyex}
 \title{Simulating and fitting replicates with structural model}
 \usage{
-noisyex(yrz, mnz, sdz, nrep, runs = TRUE, trnsfm = FALSE)
+noisyex(yrz, mnz, sdz, nrep, runs = TRUE, trnsfm = 0)
 }
 \arguments{
 \item{yrz}{}
@@ -17,7 +17,7 @@ noisyex(yrz, mnz, sdz, nrep, runs = TRUE, trnsfm = FALSE)
 
 \item{runs}{}
 
-\item{trnsfm}{}
+\item{trnsfm}{0 = no transformation; 1 = log transformation; 2 = logit transformation}
 }
 \value{
 data.table of results

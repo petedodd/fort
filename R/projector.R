@@ -10,14 +10,19 @@
 ##' @param sdz 
 ##' @param nrep 
 ##' @param runs 
-##' @param trnsfm 
+##' @param trnsfm 0 = no transformation; 1 = log transformation; 2 = logit transformation
 ##' @return data.table of results
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @import imputeTS
-noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=FALSE){
-  if(trnsfm){
+noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
+  if(trnsfm==1){
     tf <- lnparz(mnz,sdz)
+    mnz <- tf$mu
+    sdz <- tf$sdlog
+  }
+  if(trnsfm==2){
+    tf <- lgtparz(mnz,sdz)
     mnz <- tf$mu
     sdz <- tf$sdlog
   }
@@ -27,7 +32,8 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=FALSE){
   for(i in 1:nrep) Xreps[upto,i] <- Xreps[upto,i] + rnorm(length(upto),sd=sdz[upto])
   ## imput
   imp <- imputeTS::na_kalman(Xreps)
-  if(trnsfm) imp <- exp(imp)
+  if(trnsfm==1) imp <- exp(imp)
+  if(trnsfm==2) imp <- expit(imp)
   dimp <- data.table::as.data.table(imp)
   dimp$year <- yrz
   dimp <- data.table::melt(dimp,id='year')
@@ -101,17 +107,31 @@ projections <- function(year,
                         Nhat,sEN,
                         Mhat,sEM,
                         Phat,sEP,
+                        ...,
                         nrep=500
                         ){
+  ## argument management
+  arguments <- list(...)
   ## incidence
-  suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,TRUE)})
+  suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
   names(RI) <- c('year','I.mid','I.sd','I.lo','I.hi')
   ## notifications
-  suppressWarnings({RN <- noisyex(year,Nhat,sEN,nrep,runs=FALSE,TRUE)})
+  suppressWarnings({RN <- noisyex(year,Nhat,sEN,nrep,runs=FALSE,1)})
   names(RN) <- c('year','N.mid','N.sd','N.lo','N.hi')
   ## mortality
-  suppressWarnings({RM <- noisyex(year,Mhat,sEM,nrep,runs=FALSE,TRUE)})
+  suppressWarnings({RM <- noisyex(year,Mhat,sEM,nrep,runs=FALSE,1)})
   names(RM) <- c('year','M.mid','M.sd','M.lo','M.hi')
+  ## fraction HIV+
+  if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
+    suppressWarnings({RH <- noisyex(year,arguments$Hhat,arguments$sEH,nrep,runs=FALSE,2)})
+    names(RH) <- c('year','H.mid','H.sd','H.lo','H.hi')
+  } else { #HIV not given
+    RH <- data.table::data.table(year=year,
+                                 H.mid=rep(0.0,length(year)),
+                                 H.sd=rep(0.0,length(year)),
+                                 H.lo=rep(0.0,length(year)),
+                                 H.hi=rep(0.0,length(year)))
+  }
   ## prevalence NOTE not currently implemented
   RP <- data.table::data.table(year=year,
                                P.mid=rep(NA_real_,length(year)),
@@ -121,5 +141,7 @@ projections <- function(year,
   ## merge and output
   ANS1 <- merge(RI,RN,by='year')
   ANS2 <- merge(RM,RP,by='year')
-  merge(ANS1,ANS2,by='year')
+  ANS <- merge(ANS1,ANS2,by='year')
+  if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)) ANS <- merge(ANS,RH,by='year')
+  ANS
 }
