@@ -144,5 +144,18 @@ projections <- function(year,
   ANS2 <- merge(RM,RP,by='year')
   ANS <- merge(ANS1,ANS2,by='year')
   if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)) ANS <- merge(ANS,RH,by='year')
+  ## computing this using duration assumption -
+  ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
+  tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
+  tx.sd <- (2-0.2)/3.92; ut.sd <- (4-1)/3.92 #SD
+  ANS[,P.mid:=N.mid*tx.mid + (I.mid-N.mid)*ut.mid]
+  ## P.sd^2 = (N.mid*tx.m)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2) +
+  ##     ((I.mid-N.mid)*ut.m)^2 * ( (ut.sd/ut.m)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
+  ANS[,P.sd:=sqrt(
+  (N.mid*tx.mid)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2)+
+  ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
+  )]
+  ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
+  ## output
   ANS
 }
