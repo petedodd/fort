@@ -120,6 +120,21 @@ ans1 <- projections(year=tmp$year,
          Phat=tmp$Mhat,sEP=tmp$sEM,
          TXf = tmp$TXf)
 
+# Create intervention data:
+HRd <- HRi <- ORt <- rep(1,length(tmp$Nhat))
+HRd[is.na(tmp$Nhat)] <- HRi[is.na(tmp$Nhat)] <- 1.1
+ORt[is.na(tmp$Nhat)] <- 0.7
+
+# Failsafe run with interventions:
+ans2 <- projections(year=tmp$year,
+         Ihat=tmp$Ihat,sEI=tmp$sEI,
+         Nhat=tmp$Nhat,sEN=tmp$sEN,
+         Mhat=tmp$Mhat,sEM=tmp$sEM,
+         Phat=tmp$Mhat,sEP=tmp$sEM,
+         TXf = tmp$TXf,ORt=ORt,
+         HRd=HRd,HRi=HRi)
+ans2
+
 }
 \author{
 Pete Dodd

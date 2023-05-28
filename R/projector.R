@@ -123,6 +123,21 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'          Phat=tmp$Mhat,sEP=tmp$sEM,
 ##'          TXf = tmp$TXf)
 ##'
+##' # Create intervention data:
+##' HRd <- HRi <- ORt <- rep(1,length(tmp$Nhat))
+##' HRd[is.na(tmp$Nhat)] <- HRi[is.na(tmp$Nhat)] <- 1.1
+##' ORt[is.na(tmp$Nhat)] <- 0.7
+##'
+##' # Failsafe run with interventions:
+##' ans2 <- projections(year=tmp$year,
+##'          Ihat=tmp$Ihat,sEI=tmp$sEI,
+##'          Nhat=tmp$Nhat,sEN=tmp$sEN,
+##'          Mhat=tmp$Mhat,sEM=tmp$sEM,
+##'          Phat=tmp$Mhat,sEP=tmp$sEM,
+##'          TXf = tmp$TXf,ORt=ORt,
+##'          HRd=HRd,HRi=HRi)
+##' ans2
+##'
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @export
@@ -141,9 +156,9 @@ projections <- function(year,
   list2env(arguments,envir = environment())                   #boost ... to this scope
   ## completions
   if(!'TXf' %in% names(arguments)) TXf <- rep(0,length(year))
-  if(!'HRd' %in% names(arguments)) HRd <- rep(0,length(year))
-  if(!'HRi' %in% names(arguments)) HRi <- rep(0,length(year))
-  if(!'ORt' %in% names(arguments)) ORt <- rep(0,length(year))
+  if(!'HRd' %in% names(arguments)) HRd <- rep(1,length(year))
+  if(!'HRi' %in% names(arguments)) HRi <- rep(1,length(year))
+  if(!'ORt' %in% names(arguments)) ORt <- rep(1,length(year))
   if(modeltype=='failsafe'){ #============== FAILSAFE MODEL ==============
     ## incidence
     suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
@@ -179,6 +194,16 @@ projections <- function(year,
     ANS2 <- merge(RM,RP,by='year')
     ANS <- merge(ANS1,ANS2,by='year')
     if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)) ANS <- merge(ANS,RH,by='year')
+    ## HR interventions NOTE the notif one will have limited validity
+    ANS[,c('I.mid','I.lo','I.hi'):=.(I.mid*HRi,I.lo*HRi,I.hi*HRi)] #OK
+    ANS[,c('N.mid','N.lo','N.hi'):=.(N.mid*HRi*HRd,N.lo*HRi*HRd,N.hi*HRi*HRd)] #approx
+    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid/HRd,M.lo/HRd,M.hi/HRd)]             #approx
+    ## add treated mortality back
+    ## project TXf
+    if(any(is.na(TXf))){
+      TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
+    } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
+    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] #NOTE no extra uncertainty
     ## computing this using duration assumption -
     ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
     tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
@@ -191,12 +216,6 @@ projections <- function(year,
     ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
     )]
     ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
-    ## add treated mortality back
-    ## project TXf
-    if(any(is.na(TXf))){
-      TXf <- expit(imputeTS::na_kalman(logit(TXf)))
-    }
-    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] #NOTE no extra uncertainty
   } else {
     stop(paste0("modeltype = ",modeltype," is not defined!"))
   }
