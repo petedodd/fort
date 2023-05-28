@@ -59,9 +59,19 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' @param sEM Deaths uncertainty as SD (NA if projection/imputation needed)
 ##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
 ##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
+##' @param TXf Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)
+##' @param HRd Hazard ratios to apply to detection hazard (assumed 1 if not given)
+##' @param HRi Hazard ratios to apply to incidence (assumed 1 if not given)
+##' @param ORt Hazard ratios to apply to treatment fatality (assumed 1 if not given)
 ##' @param nrep number of replicates used - NOTE likely to be temporary
+##' @param output Return data + projection ('projection') or fit + projection ('fit')
+##' @param modeltype Which version to use:
+##'   * `failsafe': the failsafe model using simulation independent timeseries models
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @examples
+##'
+##' # Some fake data for basic examples:
+##' 
 ##' tmp <- structure(list(year = c(2000, 2001, 2002, 2003, 2004, 2005, 2006,
 ##' 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017,
 ##' 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026),
@@ -97,8 +107,22 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' 1.14876519324219, 1.22099474332274, 1.21995493069537, 1.2210104574169,
 ##' 1.21500236771799, NA, NA, NA, NA, NA, NA, NA)), row.names = c(NA,-27L), class = "data.frame")
 ##'
-##' test <- projections(tmp$year,tmp$Ihat,tmp$sEI,tmp$Nhat,tmp$sEN,tmp$Mhat,tmp$sEM)
-##' 
+##' # Default projections using failsafe method:
+##'
+##' ans0 <- projections(tmp$year,tmp$Ihat,tmp$sEI,tmp$Nhat,tmp$sEN,tmp$Mhat,tmp$sEM)
+##'
+##'
+##' # Create some treatment CFR data:
+##' tmp$TXf <- tmp$Nhat/1e3
+##'
+##' # Failsafe run using treatment CFR data:
+##' ans1 <- projections(year=tmp$year,
+##'          Ihat=tmp$Ihat,sEI=tmp$sEI,
+##'          Nhat=tmp$Nhat,sEN=tmp$sEN,
+##'          Mhat=tmp$Mhat,sEM=tmp$sEM,
+##'          Phat=tmp$Mhat,sEP=tmp$sEM,
+##'          TXf = tmp$TXf)
+##'
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @export
@@ -108,54 +132,74 @@ projections <- function(year,
                         Mhat,sEM,
                         Phat,sEP,
                         ...,
-                        nrep=500
+                        nrep=500,
+                        output='projection', #TODO
+                        modeltype='failsafe'
                         ){
   ## argument management
   arguments <- list(...)
-  ## incidence
-  suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
-  names(RI) <- c('year','I.mid','I.sd','I.lo','I.hi')
-  ## notifications
-  suppressWarnings({RN <- noisyex(year,Nhat,sEN,nrep,runs=FALSE,1)})
-  names(RN) <- c('year','N.mid','N.sd','N.lo','N.hi')
-  ## mortality
-  suppressWarnings({RM <- noisyex(year,Mhat,sEM,nrep,runs=FALSE,1)})
-  names(RM) <- c('year','M.mid','M.sd','M.lo','M.hi')
-  ## fraction HIV+
-  if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
-    cat('Running HIV component...\n')
-    suppressWarnings({RH <- noisyex(year,arguments$Hhat,arguments$sEH,nrep,runs=FALSE,2)})
-    names(RH) <- c('year','H.mid','H.sd','H.lo','H.hi')
-  } else { #HIV not given
-    RH <- data.table::data.table(year=year,
-                                 H.mid=rep(0.0,length(year)),
-                                 H.sd=rep(0.0,length(year)),
-                                 H.lo=rep(0.0,length(year)),
-                                 H.hi=rep(0.0,length(year)))
+  list2env(arguments,envir = environment())                   #boost ... to this scope
+  ## completions
+  if(!'TXf' %in% names(arguments)) TXf <- rep(0,length(year))
+  if(!'HRd' %in% names(arguments)) HRd <- rep(0,length(year))
+  if(!'HRi' %in% names(arguments)) HRi <- rep(0,length(year))
+  if(!'ORt' %in% names(arguments)) ORt <- rep(0,length(year))
+  if(modeltype=='failsafe'){ #============== FAILSAFE MODEL ==============
+    ## incidence
+    suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
+    names(RI) <- c('year','I.mid','I.sd','I.lo','I.hi')
+    ## notifications
+    suppressWarnings({RN <- noisyex(year,Nhat,sEN,nrep,runs=FALSE,1)})
+    names(RN) <- c('year','N.mid','N.sd','N.lo','N.hi')
+    ## mortality
+    suppressWarnings({RM <- noisyex(year,
+                                    Mhat-TXf*Nhat, #take off mortality on treatment (see below addon)
+                                    sEM,nrep,runs=FALSE,1)})
+    names(RM) <- c('year','M.mid','M.sd','M.lo','M.hi')
+    ## fraction HIV+
+    if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
+      cat('Running HIV component...\n')
+      suppressWarnings({RH <- noisyex(year,arguments$Hhat,arguments$sEH,nrep,runs=FALSE,2)})
+      names(RH) <- c('year','H.mid','H.sd','H.lo','H.hi')
+    } else { #HIV not given
+      RH <- data.table::data.table(year=year,
+                                   H.mid=rep(0.0,length(year)),
+                                   H.sd=rep(0.0,length(year)),
+                                   H.lo=rep(0.0,length(year)),
+                                   H.hi=rep(0.0,length(year)))
+    }
+    ## prevalence NOTE not currently implemented
+    RP <- data.table::data.table(year=year,
+                                 P.mid=rep(NA_real_,length(year)),
+                                 P.sd=rep(NA_real_,length(year)),
+                                 P.lo=rep(NA_real_,length(year)),
+                                 P.hi=rep(NA_real_,length(year)))
+    ## merge and output
+    ANS1 <- merge(RI,RN,by='year')
+    ANS2 <- merge(RM,RP,by='year')
+    ANS <- merge(ANS1,ANS2,by='year')
+    if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)) ANS <- merge(ANS,RH,by='year')
+    ## computing this using duration assumption -
+    ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
+    tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
+    tx.sd <- (2-0.2)/3.92; ut.sd <- (4-1)/3.92 #SD
+    ANS[,P.mid:=N.mid*tx.mid + (I.mid-N.mid)*ut.mid]
+    ## P.sd^2 = (N.mid*tx.m)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2) +
+    ##     ((I.mid-N.mid)*ut.m)^2 * ( (ut.sd/ut.m)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
+    ANS[,P.sd:=sqrt(
+    (N.mid*tx.mid)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2)+
+    ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
+    )]
+    ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
+    ## add treated mortality back
+    ## project TXf
+    if(any(is.na(TXf))){
+      TXf <- expit(imputeTS::na_kalman(logit(TXf)))
+    }
+    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] #NOTE no extra uncertainty
+  } else {
+    stop(paste0("modeltype = ",modeltype," is not defined!"))
   }
-  ## prevalence NOTE not currently implemented
-  RP <- data.table::data.table(year=year,
-                               P.mid=rep(NA_real_,length(year)),
-                               P.sd=rep(NA_real_,length(year)),
-                               P.lo=rep(NA_real_,length(year)),
-                               P.hi=rep(NA_real_,length(year)))
-  ## merge and output
-  ANS1 <- merge(RI,RN,by='year')
-  ANS2 <- merge(RM,RP,by='year')
-  ANS <- merge(ANS1,ANS2,by='year')
-  if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)) ANS <- merge(ANS,RH,by='year')
-  ## computing this using duration assumption -
-  ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
-  tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
-  tx.sd <- (2-0.2)/3.92; ut.sd <- (4-1)/3.92 #SD
-  ANS[,P.mid:=N.mid*tx.mid + (I.mid-N.mid)*ut.mid]
-  ## P.sd^2 = (N.mid*tx.m)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2) +
-  ##     ((I.mid-N.mid)*ut.m)^2 * ( (ut.sd/ut.m)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
-  ANS[,P.sd:=sqrt(
-  (N.mid*tx.mid)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2)+
-  ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
-  )]
-  ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
   ## output
   ANS
 }
