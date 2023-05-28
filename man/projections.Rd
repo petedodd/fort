@@ -4,7 +4,21 @@
 \alias{projections}
 \title{projections}
 \usage{
-projections(year, Ihat, sEI, Nhat, sEN, Mhat, sEM, Phat, sEP, ..., nrep = 500)
+projections(
+  year,
+  Ihat,
+  sEI,
+  Nhat,
+  sEN,
+  Mhat,
+  sEM,
+  Phat,
+  sEP,
+  ...,
+  nrep = 500,
+  output = "projection",
+  modeltype = "failsafe"
+)
 }
 \arguments{
 \item{year}{vector of years for which there is data or an estimate is required}
@@ -26,6 +40,21 @@ projections(year, Ihat, sEI, Nhat, sEN, Mhat, sEM, Phat, sEP, ..., nrep = 500)
 \item{sEP}{Prevalence uncertainty as SD (NA if projection/imputation needed)}
 
 \item{nrep}{number of replicates used - NOTE likely to be temporary}
+
+\item{output}{Return data + projection ('projection') or fit + projection ('fit')}
+
+\item{modeltype}{Which version to use:
+\itemize{
+\item `failsafe': the failsafe model using simulation independent timeseries models
+}}
+
+\item{TXf}{Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)}
+
+\item{HRd}{Hazard ratios to apply to detection hazard (assumed 1 if not given)}
+
+\item{HRi}{Hazard ratios to apply to incidence (assumed 1 if not given)}
+
+\item{ORt}{Hazard ratios to apply to treatment fatality (assumed 1 if not given)}
 }
 \value{
 A data.frame/data.table with the projections and uncertainty
@@ -37,6 +66,9 @@ Main projection function to be exported
 .. content for \details{projections} ..
 }
 \examples{
+
+# Some fake data for basic examples:
+
 tmp <- structure(list(year = c(2000, 2001, 2002, 2003, 2004, 2005, 2006,
 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017,
 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026),
@@ -72,7 +104,21 @@ sEM = c(5.50426791938695, 4.99926659859985, 4.62031120755379,
 1.14876519324219, 1.22099474332274, 1.21995493069537, 1.2210104574169,
 1.21500236771799, NA, NA, NA, NA, NA, NA, NA)), row.names = c(NA,-27L), class = "data.frame")
 
-test <- projections(tmp$year,tmp$Ihat,tmp$sEI,tmp$Nhat,tmp$sEN,tmp$Mhat,tmp$sEM)
+# Default projections using failsafe method:
+
+ans0 <- projections(tmp$year,tmp$Ihat,tmp$sEI,tmp$Nhat,tmp$sEN,tmp$Mhat,tmp$sEM)
+
+
+# Create some treatment CFR data:
+tmp$TXf <- tmp$Nhat/1e3
+
+# Failsafe run using treatment CFR data:
+ans1 <- projections(year=tmp$year,
+         Ihat=tmp$Ihat,sEI=tmp$sEI,
+         Nhat=tmp$Nhat,sEN=tmp$sEN,
+         Mhat=tmp$Mhat,sEM=tmp$sEM,
+         Phat=tmp$Mhat,sEP=tmp$sEM,
+         TXf = tmp$TXf)
 
 }
 \author{
