@@ -222,3 +222,72 @@ projections <- function(year,
   ## output
   ANS
 }
+
+
+
+
+##' Main projection function to be exported
+##'
+##' .. content for \details{Cprojections} ..
+##' @title Cprojections
+##' @param year vector of years for which there is data or an estimate is required
+##' @param Ihat Incidence midpoints (NA if projection/imputation needed)
+##' @param sEI Incidence uncertainty as SD (NA if projection/imputation needed)
+##' @param Nhat Notifications midpoints (NA if projection/imputation needed)
+##' @param sEN Notifications uncertainty as SD (NA if projection/imputation needed)
+##' @param Mhat Deaths midpoints (NA if projection/imputation needed)
+##' @param sEM Deaths uncertainty as SD (NA if projection/imputation needed)
+##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
+##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
+##' @return A data.frame/data.table with the projections and uncertainty
+##' @examples
+##' 
+##' @author Pete Dodd
+##' @import data.table
+##' @import bssm
+##' @export
+Cprojections <- function(year,
+                        Ihat,sEI,
+                        Nhat,sEN,
+                        Mhat,sEM,
+                        Phat,sEP,
+                        ...
+                        ){
+
+  pntrs <- create_xptrs() #create pointers
+  initial_theta <- c(logSI = 1)
+
+  known_params <- c(mI0 = Ihat[1],mP0 = Phat[1],
+                    mN0 = Nhat[1],mD0 = Mhat[1],
+                    momega = -1.1, mdelta = 0, mpsi = logit(0.5),
+                    sI0 = Ihat[1]/1e2,sP0 = Phat[1]/1e2,
+                    sN0 = Nhat[1]/1e2,sD0 = Mhat[1]/1e2,
+                    somega = 0.7,sdelta = sdelta0,spsi = 0.3)
+
+  known_tv_params <- cbind(sEI,sEP,
+                           sEN,sEM)
+
+  ## tests:
+  state <- c(100, 100, 100, 10,
+             log(3),log(1),logit(0.5))
+
+  ## create model
+  model <- bssm::ssm_nlg(y = Yhat, a1=pntrs$a1, P1 = pntrs$P1, 
+                   Z = pntrs$Z_fn, H = pntrs$H_fn, T = pntrs$T_fn, R = pntrs$R_fn, 
+                   Z_gn = pntrs$Z_gn, T_gn = pntrs$T_gn,
+                   theta = initial_theta, log_prior_pdf = pntrs$log_prior_pdf,
+                   known_params = known_params, known_tv_params = known_tv_params,
+                   n_states = 7, n_etas = 4,
+                   state_names = SNMZ)
+
+  ## inference
+  mcmc.type <- 'ekf'              #change inference type
+  ITER <- 6000 ; BURN <- 1000 
+  mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
+  ## summary(mcmc_fit, return_se = TRUE)
+  outs <- data.table::as.data.table(mcmc_fit,variable='states')
+  outs <- outs[,.(mid=mean(value),lo=quantile(value,0.0275),hi=quantile(value,0.975)),
+               by=.(variable,time)]
+  outs
+
+}

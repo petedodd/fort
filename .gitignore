@@ -41,3 +41,7 @@ vignettes/*.pdf
 
 # for mac users
 .DS_Store
+
+# compilation files
+src/*.so
+src/*.o
