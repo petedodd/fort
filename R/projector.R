@@ -239,8 +239,14 @@ projections <- function(year,
 ##' @param sEM Deaths uncertainty as SD (NA if projection/imputation needed)
 ##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
 ##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
+##' @param returntype Determines what is returned if projecting
+##' @param nahead how many years to project
+##' * `futureonly': (default) only returns projection
+##' * `fit': returns SSM output for all times
+##' * `projection`: returns inputs during data combined with projections after
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @examples
+##' TODO
 ##' 
 ##' @author Pete Dodd
 ##' @import data.table
@@ -251,43 +257,151 @@ Cprojections <- function(year,
                         Nhat,sEN,
                         Mhat,sEM,
                         Phat,sEP,
-                        ...
+                        ...,
+                        nahead=0,
+                        returntype='projection'
                         ){
+  if(nahead==0 & returntype=='futureonly') stop("Can't have nahead=0 and only return future!")
+  arguments <- list(...)
+  list2env(arguments,envir = environment())                   #boost ... to this scope
+
+  ## completions NOTE different naming to above!
+  if(!'logIRR' %in% names(arguments)) logIRR <- rep(0,nahead)      #IRR on incidence
+  if(!'logIRRdelta' %in% names(arguments)) logIRRdelta <- rep(0.0,nahead) #detection
+  if(!'logORpsi' %in% names(arguments)) logORpsi <- rep(0,nahead)    #deaths off treatment - not for use
+
 
   pntrs <- create_xptrs() #create pointers
-  initial_theta <- c(logSI = 1)
 
-  known_params <- c(mI0 = Ihat[1],mP0 = Phat[1],
-                    mN0 = Nhat[1],mD0 = Mhat[1],
-                    momega = -1.1, mdelta = 0, mpsi = logit(0.5),
-                    sI0 = Ihat[1]/1e2,sP0 = Phat[1]/1e2,
-                    sN0 = Nhat[1]/1e2,sD0 = Mhat[1]/1e2,
-                    somega = 0.7,sdelta = sdelta0,spsi = 0.3)
+  ## processing data
+  sfac <- 10
+  Yhat <- cbind(Ihat,Phat,Nhat,Mhat)
+  Vhat <- cbind(sEI,sEI*5,Nhat*0.1,Mhat)
+  NoverI <- tmp$Nhat[1]/tmp$Ihat[1]
 
-  known_tv_params <- cbind(sEI,sEP,
-                           sEN,sEM)
+  ## transformations
+  Yhat <- getLNmu(Yhat,Vhat)
+  Vhat <- getLNsig(Yhat,Vhat)
+  Vhat <- Vhat/sfac
+  Vhat[,c(1,3,4)] <- 0.05
+  Vhat[,2] <- 0.2
+
+  ## Initial states:
+  IS <- c(log(c(Ihat[1],Phat[1],Nhat[1],Mhat[1])),
+                 c(0.1,0.1,0.1,0.1))
+  names(IS) <- c("mI0","mP0","mN0","mD0","sI0","sP0","sN0","sD0")
+  sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
+
+  initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1)
+  known_params <- c(mI0 = (IS['mI0']),
+                    mP0 = (IS['mP0']),
+                    mN0 = (IS['mN0']),
+                    mD0 = (IS['mD0']),
+                    momega = -1.1,
+                    mdelta = log(NoverI), #N/I as proxy for N/P
+                    mpsi = logit(0.5),## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
+                    sI0 = (IS['sI0']), #NOTE
+                    sP0 = (IS['sP0']),
+                    sN0 = (IS['sN0']),
+                    sD0 = (IS['sD0']),
+                    somega = 0.7,
+                    sdelta = sdelta0,
+                    spsi = 0.3)
+
+  known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
+
+  ## for predictions
+  future_known_tv_params <- known_tv_params[rep(nrow(Vhat),nahead),]
+  ## NOTE interventions
+  future_known_tv_params[,5] <- logIRR
+  future_known_tv_params[,6] <- logIRRdelta
+
+  tt3SNMZ <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
+               'logomega','logdelta','psi')
+
 
   ## tests:
-  state <- c(100, 100, 100, 10,
+  state <- c(log(100), log(100), log(100), log(10),
              log(3),log(1),logit(0.5))
 
   ## create model
-  model <- bssm::ssm_nlg(y = Yhat, a1=pntrs$a1, P1 = pntrs$P1, 
+  model <- ssm_nlg(y = Yhat,
+                   a1=pntrs$a1, P1 = pntrs$P1, 
                    Z = pntrs$Z_fn, H = pntrs$H_fn, T = pntrs$T_fn, R = pntrs$R_fn, 
                    Z_gn = pntrs$Z_gn, T_gn = pntrs$T_gn,
                    theta = initial_theta, log_prior_pdf = pntrs$log_prior_pdf,
                    known_params = known_params, known_tv_params = known_tv_params,
                    n_states = 7, n_etas = 4,
-                   state_names = SNMZ)
+                   state_names = tt3SNMZ)
+
 
   ## inference
   mcmc.type <- 'ekf'              #change inference type
   ITER <- 6000 ; BURN <- 1000 
   mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
-  ## summary(mcmc_fit, return_se = TRUE)
-  outs <- data.table::as.data.table(mcmc_fit,variable='states')
-  outs <- outs[,.(mid=mean(value),lo=quantile(value,0.0275),hi=quantile(value,0.975)),
-               by=.(variable,time)]
+
+  if(returntype=='fit'){
+    outsf <- as.data.table(mcmc_fit,variable='states')
+    tmpof <- outsf[grepl('log',variable)] #the logged
+    tmpof[,value:=exp(value)]
+    tmpof[,variable:=gsub('log','',variable)]
+    outsf <- rbind(outsf,tmpof)
+    outsf <- outsf[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
+  }
+
+  ## predict
+  if(nahead>1){
+    future_model <- model
+    future_model$y <- ts(matrix(NA, ncol=4,nrow=nahead),
+                         start = tsp(model$y)[2] + deltat(model$y),
+                         frequency = frequency(model$y))
+    future_model$known_tv_params <- future_known_tv_params
+    pred <- predict(mcmc_fit, model = future_model, type = "state", 
+                    nsim = 1000)
+    mcmc_fit <- pred
+  }
+  outs <- as.data.table(mcmc_fit,variable='states')
+  tmpo <- outs[grepl('log',variable)] #the logged
+  tmpo[,value:=exp(value)]
+  tmpo[,variable:=gsub('log','',variable)]
+  outs <- rbind(outs,tmpo)
+  outs <- outs[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
+  if(returntype=='futureonly'){
+    ## No action needed
+  }
+  if(returntype=='projection'){
+    ## create same format input data
+    inputs.m <- data.table::data.table(Incidence=Ihat,Notifications=Nhat,
+                                       Deaths=Mhat,Prevalence=Phat,
+                                       time=1:length(year))
+    inputs.h <- data.table::data.table(Incidence=Ihat+1.96*sEI,
+                                       Notifications=Nhat+1.96*sEN,
+                                       Deaths=Mhat+1.96*sEM,
+                                       Prevalence=Phat+1.96*sEP,
+                                       time=1:length(year))
+    inputs.l <- data.table::data.table(Incidence=pmax(0,Ihat-1.96*sEI),
+                                       Notifications=pmax(0,Nhat-1.96*sEN),
+                                       Deaths=pmax(0,Mhat-1.96*sEM),
+                                       Prevalence=pmax(0,Phat-1.96*sEP),
+                                       time=1:length(year))
+    inputs.m <- melt(inputs.m,id.vars = c('time'))
+    names(inputs.m)[3] <- 'mid'
+    inputs.l <- melt(inputs.l,id.vars = c('time'))
+    names(inputs.l)[3] <- 'lo'
+    inputs.h <- melt(inputs.h,id.vars = c('time'))
+    names(inputs.h)[3] <- 'hi'
+    inputs.a <- merge(inputs.m,inputs.l,id=c('time'))
+    inputs.a <- merge(inputs.a,inputs.h,id=c('time'))
+    ## ouput
+    outs <- rbind(inputs.a,outs)
+  }
+  if(returntype=='fit'){
+    outs <- rbind(outsf,outs) #combine with past fit
+  }
+
   outs
 
 }
+
+## TODO
+## wrap and nahead process etc

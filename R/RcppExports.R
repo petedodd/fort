@@ -2,43 +2,43 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 a1_fn <- function(theta, known_params) {
-    .Call('_fort_a1_fn', PACKAGE = 'fort', theta, known_params)
+    .Call(`_fort_a1_fn`, theta, known_params)
 }
 
 P1_fn <- function(theta, known_params) {
-    .Call('_fort_P1_fn', PACKAGE = 'fort', theta, known_params)
+    .Call(`_fort_P1_fn`, theta, known_params)
 }
 
 H_fn <- function(t, alpha, theta, known_params, known_tv_params) {
-    .Call('_fort_H_fn', PACKAGE = 'fort', t, alpha, theta, known_params, known_tv_params)
+    .Call(`_fort_H_fn`, t, alpha, theta, known_params, known_tv_params)
 }
 
 R_fn <- function(t, alpha, theta, known_params, known_tv_params) {
-    .Call('_fort_R_fn', PACKAGE = 'fort', t, alpha, theta, known_params, known_tv_params)
+    .Call(`_fort_R_fn`, t, alpha, theta, known_params, known_tv_params)
 }
 
 Z_fn <- function(t, alpha, theta, known_params, known_tv_params) {
-    .Call('_fort_Z_fn', PACKAGE = 'fort', t, alpha, theta, known_params, known_tv_params)
+    .Call(`_fort_Z_fn`, t, alpha, theta, known_params, known_tv_params)
 }
 
 Z_gn <- function(t, alpha, theta, known_params, known_tv_params) {
-    .Call('_fort_Z_gn', PACKAGE = 'fort', t, alpha, theta, known_params, known_tv_params)
+    .Call(`_fort_Z_gn`, t, alpha, theta, known_params, known_tv_params)
 }
 
 T_fn <- function(t, alpha, theta, known_params, known_tv_params) {
-    .Call('_fort_T_fn', PACKAGE = 'fort', t, alpha, theta, known_params, known_tv_params)
+    .Call(`_fort_T_fn`, t, alpha, theta, known_params, known_tv_params)
 }
 
 T_gn <- function(t, alpha, theta, known_params, known_tv_params) {
-    .Call('_fort_T_gn', PACKAGE = 'fort', t, alpha, theta, known_params, known_tv_params)
+    .Call(`_fort_T_gn`, t, alpha, theta, known_params, known_tv_params)
 }
 
 log_prior_pdf <- function(theta) {
-    .Call('_fort_log_prior_pdf', PACKAGE = 'fort', theta)
+    .Call(`_fort_log_prior_pdf`, theta)
 }
 
 create_xptrs <- function() {
-    .Call('_fort_create_xptrs', PACKAGE = 'fort')
+    .Call(`_fort_create_xptrs`)
 }
 
 # Register entry points for exported C++ functions
