@@ -64,7 +64,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' @param HRi Hazard ratios to apply to incidence (assumed 1 if not given)
 ##' @param ORt Hazard ratios to apply to treatment fatality (assumed 1 if not given)
 ##' @param nrep number of replicates used - NOTE likely to be temporary
-##' @param output Return data + projection ('projection') or fit + projection ('fit')
+##' @param output Return data + projection ('projection') or fit + projection ('fit')  or futureonly
 ##' @param modeltype Which version to use:
 ##'   * `failsafe': the failsafe model using simulation independent timeseries models
 ##' @return A data.frame/data.table with the projections and uncertainty
@@ -137,6 +137,18 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'          TXf = tmp$TXf,ORt=ORt,
 ##'          HRd=HRd,HRi=HRi)
 ##' ans2
+##'
+##' ## example for rwI SSM model
+##' ans3 <- projections(year=tmp$year,
+##'           Ihat=tmp$Ihat,sEI=tmp$sEI,
+##'           Nhat=tmp$Nhat,sEN=tmp$sEN,
+##'           Mhat=tmp$Mhat,sEM=tmp$sEM,
+##'           Phat=tmp$Mhat,sEP=tmp$sEM,
+##'           TXf = tmp$TXf,
+##'           modeltype = 'rwI',
+##'           returntype='projections')
+##'
+##' ans3
 ##'
 ##' @author Pete Dodd
 ##' @import data.table
@@ -216,9 +228,231 @@ projections <- function(year,
     ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
     )]
     ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
-  } else {
-    stop(paste0("modeltype = ",modeltype," is not defined!"))
+  } else if(modeltype=='rwI'){ #============== SSM RW for I MODEL ==============
+    nahead <- which.max(!is.na(rev(Ihat)))-1 #assume NAs at back
+    lastd <- length(Ihat)-nahead
+    ## TODO preprocess out NAs by interpolation if needed?
+    logIRR <- log(HRi[(lastd+1):length(HRd)])      #IRR on incidence
+    logIRRdelta <- log(HRd[(lastd+1):length(HRd)]) #detection
+    logORpsi <- log(ORt[(lastd+1):length(HRd)])    #deaths off treatment - not for use
+    ## make guess for P
+    Phat <- Ihat; sEP <- 2*sEI
+    didx <- 1:lastd #data range
+    ANS <- Cprojections(year[didx],
+                 Ihat[didx],sEI[didx],
+                 Nhat[didx],sEN[didx],
+                 Mhat[didx],sEM[didx],
+                 Phat[didx],sEP[didx],
+                 nahead=nahead,
+                 logIRR=logIRR,
+                 logIRRdelta=logIRRdelta,
+                 logORpsi=logORpsi,
+                 returntype=output
+                 )
+    } else {
+      stop(paste0("modeltype = ",modeltype," is not defined!"))
+    }
+  if(modeltype!='failsafe'){
+    ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
+                                                 'Prevalence','Deaths','time')],
+                 time ~ variable,value.var=c('mid','lo','hi'))
+    names(ANS) <- c('year',
+                    'I.mid','N.mid','M.mid','P.mid',
+                    'I.lo','N.lo','M.lo','P.lo',
+                    'I.hi','N.hi','M.hi','P.hi')
+    ANS$year <- year[ANS$year]
+    ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
+           .((I.hi-I.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92)]
+    setcolorder(ANS,neworder = c("year",
+                                 "I.mid", "I.sd",  "I.lo", "I.hi",
+                                 "N.mid", "N.sd",  "N.lo", "N.hi", 
+                                 "M.mid", "M.sd",  "M.lo", "M.hi",
+                                 "P.mid", "P.sd",  "P.lo", "P.hi" ))
   }
   ## output
   ANS
+}
+
+
+
+
+##' Main projection function to be exported
+##'
+##' .. content for \details{Cprojections} ..
+##' @title Cprojections
+##' @param year vector of years for which there is data or an estimate is required
+##' @param Ihat Incidence midpoints (NA if projection/imputation needed)
+##' @param sEI Incidence uncertainty as SD (NA if projection/imputation needed)
+##' @param Nhat Notifications midpoints (NA if projection/imputation needed)
+##' @param sEN Notifications uncertainty as SD (NA if projection/imputation needed)
+##' @param Mhat Deaths midpoints (NA if projection/imputation needed)
+##' @param sEM Deaths uncertainty as SD (NA if projection/imputation needed)
+##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
+##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
+##' @param returntype Determines what is returned if projecting
+##' @param nahead how many years to project
+##' * `futureonly': (default) only returns projection
+##' * `fit': returns SSM output for all times
+##' * `projection`: returns inputs during data combined with projections after
+##' @return A data.frame/data.table with the projections and uncertainty
+##' @examples
+##' TODO
+##' 
+##' @author Pete Dodd
+##' @import data.table
+##' @import bssm
+##' @export
+Cprojections <- function(year,
+                        Ihat,sEI,
+                        Nhat,sEN,
+                        Mhat,sEM,
+                        Phat,sEP,
+                        ...,
+                        nahead=0,
+                        returntype='projection'
+                        ){
+
+  if(nahead==0 & returntype=='futureonly') stop("Can't have nahead=0 and only return future!")
+  arguments <- list(...)
+  list2env(arguments,envir = environment())                   #boost ... to this scope
+
+  cat('...nahead = ',nahead,'...\n')
+  ## completions NOTE different naming to above!
+  if(!'logIRR' %in% names(arguments)) logIRR <- rep(0,nahead)      #IRR on incidence
+  if(!'logIRRdelta' %in% names(arguments)) logIRRdelta <- rep(0.0,nahead) #detection
+  if(!'logORpsi' %in% names(arguments)) logORpsi <- rep(0,nahead)    #deaths off treatment - not for use
+
+
+  pntrs <- create_xptrs() #create pointers
+
+  ## processing data
+  sfac <- 10
+  Yhat <- cbind(Ihat,Phat,Nhat,Mhat)
+  Vhat <- cbind(sEI,sEI*5,Nhat*0.1,Mhat)
+  NoverI <- tmp$Nhat[1]/tmp$Ihat[1]
+
+  ## transformations
+  Yhat <- getLNmu(Yhat,Vhat)
+  Vhat <- getLNsig(Yhat,Vhat)
+  Vhat <- Vhat/sfac
+  Vhat[,c(1,3,4)] <- 0.05
+  Vhat[,2] <- 0.2
+
+  ## Initial states:
+  IS <- c(log(c(Ihat[1],Phat[1],Nhat[1],Mhat[1])),
+                 c(0.1,0.1,0.1,0.1))
+  names(IS) <- c("mI0","mP0","mN0","mD0","sI0","sP0","sN0","sD0")
+  sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
+
+  initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1)
+  known_params <- c(mI0 = (IS['mI0']),
+                    mP0 = (IS['mP0']),
+                    mN0 = (IS['mN0']),
+                    mD0 = (IS['mD0']),
+                    momega = -1.1,
+                    mdelta = log(NoverI), #N/I as proxy for N/P
+                    mpsi = logit(0.5),## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
+                    sI0 = (IS['sI0']), #NOTE
+                    sP0 = (IS['sP0']),
+                    sN0 = (IS['sN0']),
+                    sD0 = (IS['sD0']),
+                    somega = 0.7,
+                    sdelta = sdelta0,
+                    spsi = 0.3)
+
+  known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
+
+  ## for predictions
+  future_known_tv_params <- known_tv_params[rep(nrow(Vhat),nahead),]
+  ## NOTE interventions
+  future_known_tv_params[,5] <- logIRR
+  future_known_tv_params[,6] <- logIRRdelta
+
+  tt3SNMZ <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
+               'logomega','logdelta','psi')
+
+
+  ## tests:
+  state <- c(log(100), log(100), log(100), log(10),
+             log(3),log(1),logit(0.5))
+
+  ## create model
+  model <- bssm::ssm_nlg(y = Yhat,
+                   a1=pntrs$a1, P1 = pntrs$P1, 
+                   Z = pntrs$Z_fn, H = pntrs$H_fn, T = pntrs$T_fn, R = pntrs$R_fn, 
+                   Z_gn = pntrs$Z_gn, T_gn = pntrs$T_gn,
+                   theta = initial_theta, log_prior_pdf = pntrs$log_prior_pdf,
+                   known_params = known_params, known_tv_params = known_tv_params,
+                   n_states = 7, n_etas = 4,
+                   state_names = tt3SNMZ)
+
+
+  ## inference
+  mcmc.type <- 'ekf'              #change inference type
+  ITER <- 6000 ; BURN <- 1000 
+  mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
+
+  if(returntype=='fit'){
+    cat('calculating fit summary...\n')
+    outsf <- as.data.table(mcmc_fit,variable='states')
+    tmpof <- outsf[grepl('log',variable)] #the logged
+    tmpof[,value:=exp(value)]
+    tmpof[,variable:=gsub('log','',variable)]
+    outsf <- rbind(outsf,tmpof)
+    outsf <- outsf[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
+  }
+
+  ## predict
+  if(nahead>1){
+    future_model <- model
+    future_model$y <- ts(matrix(NA, ncol=4,nrow=nahead),
+                         start = tsp(model$y)[2] + deltat(model$y),
+                         frequency = frequency(model$y))
+    future_model$known_tv_params <- future_known_tv_params
+    pred <- predict(mcmc_fit, model = future_model, type = "state", 
+                    nsim = 1000)
+    mcmc_fit <- pred
+  }
+  outs <- data.table::as.data.table(mcmc_fit,variable='states')
+  tmpo <- outs[grepl('log',variable)] #the logged
+  tmpo[,value:=exp(value)]
+  tmpo[,variable:=gsub('log','',variable)]
+  outs <- rbind(outs,tmpo)
+  outs <- outs[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
+  if(returntype=='futureonly'){
+    ## No action needed
+    cat('future only, no summary...\n')
+  }
+  if(returntype=='projection'){
+    cat('projection fit summary...\n')
+    ## create same format input data
+    inputs.m <- data.table::data.table(Incidence=Ihat,Notifications=Nhat,
+                                       Deaths=Mhat,Prevalence=Phat,
+                                       time=1:length(year))
+    inputs.h <- data.table::data.table(Incidence=Ihat+1.96*sEI,
+                                       Notifications=Nhat+1.96*sEN,
+                                       Deaths=Mhat+1.96*sEM,
+                                       Prevalence=Phat+1.96*sEP,
+                                       time=1:length(year))
+    inputs.l <- data.table::data.table(Incidence=pmax(0,Ihat-1.96*sEI),
+                                       Notifications=pmax(0,Nhat-1.96*sEN),
+                                       Deaths=pmax(0,Mhat-1.96*sEM),
+                                       Prevalence=pmax(0,Phat-1.96*sEP),
+                                       time=1:length(year))
+    inputs.m <- melt(inputs.m,id.vars = c('time'))
+    names(inputs.m)[3] <- 'mid'
+    inputs.l <- melt(inputs.l,id.vars = c('time'))
+    names(inputs.l)[3] <- 'lo'
+    inputs.h <- melt(inputs.h,id.vars = c('time'))
+    names(inputs.h)[3] <- 'hi'
+    inputs.a <- merge(inputs.m,inputs.l,id=c('time'))
+    inputs.a <- merge(inputs.a,inputs.h,id=c('time'))
+    ## ouput
+    outs <- rbind(inputs.a,outs)
+  }
+  if(returntype=='fit'){
+    cat('adding fit summary...\n')
+    outs <- rbind(outsf,outs) #combine with past fit
+  }
+  outs
 }

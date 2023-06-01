@@ -9,6 +9,12 @@ gh <- function(x) glue(here(x))
 lnparz <- function(mn,S){ #get log normal parms
   list(mu=log(mn^2/sqrt(mn^2+S^2)),sdlog=sqrt(log(1+S^2/mn^2)))
 }
+getLNmu <- function(m,S){
+  log(m^2/sqrt(m^2+S^2))
+}
+getLNsig <- function(m,S){
+  sqrt(log(1+S^2/m^2))
+}
 exparz <- function(mu,sdlog){
   list(mn=exp(mu+sdlog^2/2),S=sqrt(exp(sdlog^2)-1)*exp(mu+sdlog^2/2))
 }
