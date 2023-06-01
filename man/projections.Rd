@@ -41,7 +41,7 @@ projections(
 
 \item{nrep}{number of replicates used - NOTE likely to be temporary}
 
-\item{output}{Return data + projection ('projection') or fit + projection ('fit')}
+\item{output}{Return data + projection ('projection') or fit + projection ('fit')  or futureonly}
 
 \item{modeltype}{Which version to use:
 \itemize{
@@ -134,6 +134,18 @@ ans2 <- projections(year=tmp$year,
          TXf = tmp$TXf,ORt=ORt,
          HRd=HRd,HRi=HRi)
 ans2
+
+## example for rwI SSM model
+ans3 <- projections(year=tmp$year,
+          Ihat=tmp$Ihat,sEI=tmp$sEI,
+          Nhat=tmp$Nhat,sEN=tmp$sEN,
+          Mhat=tmp$Mhat,sEM=tmp$sEM,
+          Phat=tmp$Mhat,sEP=tmp$sEM,
+          TXf = tmp$TXf,
+          modeltype = 'rwI',
+          returntype='projections')
+
+ans3
 
 }
 \author{

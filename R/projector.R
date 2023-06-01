@@ -64,7 +64,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' @param HRi Hazard ratios to apply to incidence (assumed 1 if not given)
 ##' @param ORt Hazard ratios to apply to treatment fatality (assumed 1 if not given)
 ##' @param nrep number of replicates used - NOTE likely to be temporary
-##' @param output Return data + projection ('projection') or fit + projection ('fit')
+##' @param output Return data + projection ('projection') or fit + projection ('fit')  or futureonly
 ##' @param modeltype Which version to use:
 ##'   * `failsafe': the failsafe model using simulation independent timeseries models
 ##' @return A data.frame/data.table with the projections and uncertainty
@@ -137,6 +137,18 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'          TXf = tmp$TXf,ORt=ORt,
 ##'          HRd=HRd,HRi=HRi)
 ##' ans2
+##'
+##' ## example for rwI SSM model
+##' ans3 <- projections(year=tmp$year,
+##'           Ihat=tmp$Ihat,sEI=tmp$sEI,
+##'           Nhat=tmp$Nhat,sEN=tmp$sEN,
+##'           Mhat=tmp$Mhat,sEM=tmp$sEM,
+##'           Phat=tmp$Mhat,sEP=tmp$sEM,
+##'           TXf = tmp$TXf,
+##'           modeltype = 'rwI',
+##'           returntype='projections')
+##'
+##' ans3
 ##'
 ##' @author Pete Dodd
 ##' @import data.table
@@ -235,14 +247,27 @@ projections <- function(year,
                  logIRR=logIRR,
                  logIRRdelta=logIRRdelta,
                  logORpsi=logORpsi,
-                 returntype='projection'
+                 returntype=output
                  )
     } else {
       stop(paste0("modeltype = ",modeltype," is not defined!"))
     }
   if(modeltype!='failsafe'){
-    ## [1] "year"  "I.mid" "I.sd"  "I.lo"  "I.hi"  "N.mid" "N.sd"  "N.lo"  "N.hi" 
-    ## [10] "M.mid" "M.sd"  "M.lo"  "M.hi"  "P.mid" "P.sd"  "P.lo"  "P.hi" 
+    ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
+                                                 'Prevalence','Deaths','time')],
+                 time ~ variable,value.var=c('mid','lo','hi'))
+    names(ANS) <- c('year',
+                    'I.mid','N.mid','M.mid','P.mid',
+                    'I.lo','N.lo','M.lo','P.lo',
+                    'I.hi','N.hi','M.hi','P.hi')
+    ANS$year <- year[ANS$year]
+    ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
+           .((I.hi-I.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92)]
+    setcolorder(ANS,neworder = c("year",
+                                 "I.mid", "I.sd",  "I.lo", "I.hi",
+                                 "N.mid", "N.sd",  "N.lo", "N.hi", 
+                                 "M.mid", "M.sd",  "M.lo", "M.hi",
+                                 "P.mid", "P.sd",  "P.lo", "P.hi" ))
   }
   ## output
   ANS
@@ -352,7 +377,7 @@ Cprojections <- function(year,
              log(3),log(1),logit(0.5))
 
   ## create model
-  model <- ssm_nlg(y = Yhat,
+  model <- bssm::ssm_nlg(y = Yhat,
                    a1=pntrs$a1, P1 = pntrs$P1, 
                    Z = pntrs$Z_fn, H = pntrs$H_fn, T = pntrs$T_fn, R = pntrs$R_fn, 
                    Z_gn = pntrs$Z_gn, T_gn = pntrs$T_gn,
@@ -368,6 +393,7 @@ Cprojections <- function(year,
   mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
 
   if(returntype=='fit'){
+    cat('calculating fit summary...\n')
     outsf <- as.data.table(mcmc_fit,variable='states')
     tmpof <- outsf[grepl('log',variable)] #the logged
     tmpof[,value:=exp(value)]
@@ -387,7 +413,7 @@ Cprojections <- function(year,
                     nsim = 1000)
     mcmc_fit <- pred
   }
-  outs <- as.data.table(mcmc_fit,variable='states')
+  outs <- data.table::as.data.table(mcmc_fit,variable='states')
   tmpo <- outs[grepl('log',variable)] #the logged
   tmpo[,value:=exp(value)]
   tmpo[,variable:=gsub('log','',variable)]
@@ -395,8 +421,10 @@ Cprojections <- function(year,
   outs <- outs[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
   if(returntype=='futureonly'){
     ## No action needed
+    cat('future only, no summary...\n')
   }
   if(returntype=='projection'){
+    cat('projection fit summary...\n')
     ## create same format input data
     inputs.m <- data.table::data.table(Incidence=Ihat,Notifications=Nhat,
                                        Deaths=Mhat,Prevalence=Phat,
@@ -423,6 +451,7 @@ Cprojections <- function(year,
     outs <- rbind(inputs.a,outs)
   }
   if(returntype=='fit'){
+    cat('adding fit summary...\n')
     outs <- rbind(outsf,outs) #combine with past fit
   }
   outs

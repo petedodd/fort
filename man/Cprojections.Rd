@@ -4,7 +4,20 @@
 \alias{Cprojections}
 \title{Cprojections}
 \usage{
-Cprojections(year, Ihat, sEI, Nhat, sEN, Mhat, sEM, Phat, sEP, ...)
+Cprojections(
+  year,
+  Ihat,
+  sEI,
+  Nhat,
+  sEN,
+  Mhat,
+  sEM,
+  Phat,
+  sEP,
+  ...,
+  nahead = 0,
+  returntype = "projection"
+)
 }
 \arguments{
 \item{year}{vector of years for which there is data or an estimate is required}
@@ -24,6 +37,15 @@ Cprojections(year, Ihat, sEI, Nhat, sEN, Mhat, sEM, Phat, sEP, ...)
 \item{Phat}{Prevalence midpoints (NA if projection/imputation needed)}
 
 \item{sEP}{Prevalence uncertainty as SD (NA if projection/imputation needed)}
+
+\item{nahead}{how many years to project
+\itemize{
+\item `futureonly': (default) only returns projection
+\item `fit': returns SSM output for all times
+\item \code{projection}: returns inputs during data combined with projections after
+}}
+
+\item{returntype}{Determines what is returned if projecting}
 }
 \value{
 A data.frame/data.table with the projections and uncertainty
@@ -33,6 +55,10 @@ Main projection function to be exported
 }
 \details{
 .. content for \details{Cprojections} ..
+}
+\examples{
+TODO
+
 }
 \author{
 Pete Dodd
