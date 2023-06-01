@@ -216,8 +216,33 @@ projections <- function(year,
     ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
     )]
     ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
-  } else {
-    stop(paste0("modeltype = ",modeltype," is not defined!"))
+  } else if(modeltype=='rwI'){ #============== SSM RW for I MODEL ==============
+    nahead <- which.max(!is.na(rev(Ihat)))-1 #assume NAs at back
+    lastd <- length(Ihat)-nahead
+    ## TODO preprocess out NAs by interpolation if needed?
+    logIRR <- log(HRi[(lastd+1):length(HRd)])      #IRR on incidence
+    logIRRdelta <- log(HRd[(lastd+1):length(HRd)]) #detection
+    logORpsi <- log(ORt[(lastd+1):length(HRd)])    #deaths off treatment - not for use
+    ## make guess for P
+    Phat <- Ihat; sEP <- 2*sEI
+    didx <- 1:lastd #data range
+    ANS <- Cprojections(year[didx],
+                 Ihat[didx],sEI[didx],
+                 Nhat[didx],sEN[didx],
+                 Mhat[didx],sEM[didx],
+                 Phat[didx],sEP[didx],
+                 nahead=nahead,
+                 logIRR=logIRR,
+                 logIRRdelta=logIRRdelta,
+                 logORpsi=logORpsi,
+                 returntype='projection'
+                 )
+    } else {
+      stop(paste0("modeltype = ",modeltype," is not defined!"))
+    }
+  if(modeltype!='failsafe'){
+    ## [1] "year"  "I.mid" "I.sd"  "I.lo"  "I.hi"  "N.mid" "N.sd"  "N.lo"  "N.hi" 
+    ## [10] "M.mid" "M.sd"  "M.lo"  "M.hi"  "P.mid" "P.sd"  "P.lo"  "P.hi" 
   }
   ## output
   ANS
@@ -261,10 +286,12 @@ Cprojections <- function(year,
                         nahead=0,
                         returntype='projection'
                         ){
+
   if(nahead==0 & returntype=='futureonly') stop("Can't have nahead=0 and only return future!")
   arguments <- list(...)
   list2env(arguments,envir = environment())                   #boost ... to this scope
 
+  cat('...nahead = ',nahead,'...\n')
   ## completions NOTE different naming to above!
   if(!'logIRR' %in% names(arguments)) logIRR <- rep(0,nahead)      #IRR on incidence
   if(!'logIRRdelta' %in% names(arguments)) logIRRdelta <- rep(0.0,nahead) #detection
@@ -398,10 +425,5 @@ Cprojections <- function(year,
   if(returntype=='fit'){
     outs <- rbind(outsf,outs) #combine with past fit
   }
-
   outs
-
 }
-
-## TODO
-## wrap and nahead process etc
