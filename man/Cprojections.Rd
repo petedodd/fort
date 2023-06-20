@@ -16,7 +16,9 @@ Cprojections(
   sEP,
   ...,
   nahead = 0,
-  returntype = "projection"
+  returntype = "projection",
+  modeltype = "rwI",
+  verbose = FALSE
 )
 }
 \arguments{
@@ -46,6 +48,14 @@ Cprojections(
 }}
 
 \item{returntype}{Determines what is returned if projecting}
+
+\item{modeltype}{String to specify which SSM variant to use:
+\itemize{
+\item `rwI': (default) random walk for incidence. NOTE no indirect impact
+\item `IP': AR(1) on a mixture of log(Incidence) and log(Prevalence).
+}}
+
+\item{verbose}{(Default=FALSE) Give more output for use in debugging.}
 }
 \value{
 A data.frame/data.table with the projections and uncertainty

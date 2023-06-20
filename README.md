@@ -15,3 +15,10 @@ While not public, the easiest approach is to clone the repository, and then use:
 `devtools::install('fort')`
 
 assuming the working directory is one level up from the repository clone.
+
+
+## TODO
+
+- fix mortality offset
+- introduce Carel's suggestions in failsafe
+- introduce hyperparameter for IP model

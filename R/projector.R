@@ -67,6 +67,9 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' @param output Return data + projection ('projection') or fit + projection ('fit')  or futureonly
 ##' @param modeltype Which version to use:
 ##'   * `failsafe': the failsafe model using simulation independent timeseries models
+##'   * `rwI': SSM with random walk for incidence. NOTE no indirect impact
+##'   * `IP': SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence).
+##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @examples
 ##'
@@ -150,6 +153,18 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'
 ##' ans3
 ##'
+##' ## example for IP SSM model
+##' ans4 <- projections(year=tmp$year,
+##'           Ihat=tmp$Ihat,sEI=tmp$sEI,
+##'           Nhat=tmp$Nhat,sEN=tmp$sEN,
+##'           Mhat=tmp$Mhat,sEM=tmp$sEM,
+##'           Phat=tmp$Mhat,sEP=tmp$sEM,
+##'           TXf = tmp$TXf,
+##'           modeltype = 'IP',
+##'           returntype='projections')
+##'
+##' ans4
+##'
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @export
@@ -161,7 +176,8 @@ projections <- function(year,
                         ...,
                         nrep=500,
                         output='projection', #TODO
-                        modeltype='failsafe'
+                        modeltype='failsafe',
+                        verbose=FALSE
                         ){
   ## argument management
   arguments <- list(...)
@@ -228,7 +244,7 @@ projections <- function(year,
     ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
     )]
     ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
-  } else if(modeltype=='rwI'){ #============== SSM RW for I MODEL ==============
+  } else { #============== SSM versions ==============
     nahead <- which.max(!is.na(rev(Ihat)))-1 #assume NAs at back
     lastd <- length(Ihat)-nahead
     ## TODO preprocess out NAs by interpolation if needed?
@@ -247,11 +263,11 @@ projections <- function(year,
                  logIRR=logIRR,
                  logIRRdelta=logIRRdelta,
                  logORpsi=logORpsi,
-                 returntype=output
+                 returntype=output,
+                 modeltype=modeltype,
+                 verbose=verbose
                  )
-    } else {
-      stop(paste0("modeltype = ",modeltype," is not defined!"))
-    }
+  }
   if(modeltype!='failsafe'){
     ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
                                                  'Prevalence','Deaths','time')],
@@ -294,6 +310,10 @@ projections <- function(year,
 ##' * `futureonly': (default) only returns projection
 ##' * `fit': returns SSM output for all times
 ##' * `projection`: returns inputs during data combined with projections after
+##' @param modeltype String to specify which SSM variant to use:
+##'  * `rwI': (default) random walk for incidence. NOTE no indirect impact
+##'  * `IP': AR(1) on a mixture of log(Incidence) and log(Prevalence).
+##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @examples
 ##' TODO
@@ -309,10 +329,13 @@ Cprojections <- function(year,
                         Phat,sEP,
                         ...,
                         nahead=0,
-                        returntype='projection'
+                        returntype='projection',
+                        modeltype='rwI',
+                        verbose=FALSE
                         ){
 
   if(nahead==0 & returntype=='futureonly') stop("Can't have nahead=0 and only return future!")
+  if(verbose) cat('Using Cprojections...\n')
   arguments <- list(...)
   list2env(arguments,envir = environment())                   #boost ... to this scope
 
@@ -322,8 +345,12 @@ Cprojections <- function(year,
   if(!'logIRRdelta' %in% names(arguments)) logIRRdelta <- rep(0.0,nahead) #detection
   if(!'logORpsi' %in% names(arguments)) logORpsi <- rep(0,nahead)    #deaths off treatment - not for use
 
-
-  pntrs <- create_xptrs() #create pointers
+  ## model choice safety
+  if(!modeltype %in% c('rwI','IP')){
+    wrn <- paste0('modeltype = ',modeltype,' is unknown! Using rwI\n')
+    warning(wrn)
+    modeltype <- 'rwI'
+  }
 
   ## processing data
   sfac <- 10
@@ -344,7 +371,8 @@ Cprojections <- function(year,
   names(IS) <- c("mI0","mP0","mN0","mD0","sI0","sP0","sN0","sD0")
   sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
 
-  initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1)
+  initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1) #default rwI
+  initial_theta_ip <- c(logSI = -1,logsdelta=-1,logsomega=-1,logphiP=-1,logitpr=-1) #IP
   known_params <- c(mI0 = (IS['mI0']),
                     mP0 = (IS['mP0']),
                     mN0 = (IS['mN0']),
@@ -376,22 +404,76 @@ Cprojections <- function(year,
   state <- c(log(100), log(100), log(100), log(10),
              log(3),log(1),logit(0.5))
 
-  ## create model
-  model <- bssm::ssm_nlg(y = Yhat,
-                   a1=pntrs$a1, P1 = pntrs$P1, 
-                   Z = pntrs$Z_fn, H = pntrs$H_fn, T = pntrs$T_fn, R = pntrs$R_fn, 
-                   Z_gn = pntrs$Z_gn, T_gn = pntrs$T_gn,
-                   theta = initial_theta, log_prior_pdf = pntrs$log_prior_pdf,
+  if(verbose) cat('Creating models...\n')
+  ## --- create models
+  ## model pointers
+  pntrsrw <- create_xptrs() #create pointers for rwI model
+  pntrsip <- create_xptrs_ip() #create pointers for IP model
+
+  if(verbose){
+    cat('Testing pointers:\n')
+    cat('rwI...\n')
+    (ta1 <- a1_fn(initial_theta,known_params))
+    (tP1 <- P1_fn(initial_theta,known_params))
+    (tH <- H_fn(1,state,initial_theta,known_params,known_tv_params))
+    (tR <- R_fn(1,state,initial_theta,known_params,known_tv_params))
+    (tZ <- Z_fn(1,state,initial_theta,known_params,known_tv_params))
+    (tdZ <- Z_gn(1,state,initial_theta,known_params,known_tv_params))
+    (tT <- T_fn(1,state,initial_theta,known_params,known_tv_params))
+    (tdT <- T_gn(1,state,initial_theta,known_params,known_tv_params))
+    log_prior_pdf(initial_theta)
+    cat('IP...\n')
+    (ta1 <- a1_fn_ip(initial_theta_ip,known_params))
+    (tP1 <- P1_fn_ip(initial_theta_ip,known_params))
+    (tH <- H_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tR <- R_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tZ <- Z_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tdZ <- Z_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tT <- T_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tdT <- T_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    log_prior_pdf_ip(initial_theta_ip)
+    cat('...done.\n')
+  }
+
+  ## rwI
+  modelrwi <- bssm::ssm_nlg(y = Yhat,
+                            a1=pntrsrw$a1, P1 = pntrsrw$P1, 
+                            Z = pntrsrw$Z_fn, H = pntrsrw$H_fn, T = pntrsrw$T_fn, R = pntrsrw$R_fn, 
+                            Z_gn = pntrsrw$Z_gn, T_gn = pntrsrw$T_gn,
+                            theta = initial_theta, log_prior_pdf = pntrsrw$log_prior_pdf,
+                            known_params = known_params, known_tv_params = known_tv_params,
+                            n_states = 7, n_etas = 4,
+                            state_names = tt3SNMZ)
+  ## IP
+  modelip <- ssm_nlg(y = Yhat,
+                   a1=pntrsip$a1, P1 = pntrsip$P1, #TODO why not _fn_ip?
+                   Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
+                   T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
+                   Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
+                   theta = initial_theta_ip, log_prior_pdf = pntrsip$log_prior_pdf_ip,
                    known_params = known_params, known_tv_params = known_tv_params,
                    n_states = 7, n_etas = 4,
                    state_names = tt3SNMZ)
 
+  ## choose model to use
+
+  if(modeltype=='rwI'){
+    cat('Using model type: ', modeltype,'\n')
+    model <- modelrwi
+  }
+  if(modeltype=='IP'){
+    cat('Using model type: ', modeltype,'\n')
+    model <- modelip
+  }
+
+  if(verbose) cat('Starting inference...\n')
 
   ## inference
   mcmc.type <- 'ekf'              #change inference type
   ITER <- 6000 ; BURN <- 1000 
   mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
 
+  if(verbose) cat('Postprocessing inference...\n')
   if(returntype=='fit'){
     cat('calculating fit summary...\n')
     outsf <- as.data.table(mcmc_fit,variable='states')
@@ -401,6 +483,8 @@ Cprojections <- function(year,
     outsf <- rbind(outsf,tmpof)
     outsf <- outsf[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
   }
+
+  if(verbose) cat('Making predictions...\n')
 
   ## predict
   if(nahead>1){
@@ -413,6 +497,8 @@ Cprojections <- function(year,
                     nsim = 1000)
     mcmc_fit <- pred
   }
+
+  if(verbose) cat('Postprocessing results...\n')
   outs <- data.table::as.data.table(mcmc_fit,variable='states')
   tmpo <- outs[grepl('log',variable)] #the logged
   tmpo[,value:=exp(value)]

@@ -17,7 +17,8 @@ projections(
   ...,
   nrep = 500,
   output = "projection",
-  modeltype = "failsafe"
+  modeltype = "failsafe",
+  verbose = FALSE
 )
 }
 \arguments{
@@ -46,7 +47,11 @@ projections(
 \item{modeltype}{Which version to use:
 \itemize{
 \item `failsafe': the failsafe model using simulation independent timeseries models
+\item `rwI': SSM with random walk for incidence. NOTE no indirect impact
+\item `IP': SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence).
 }}
+
+\item{verbose}{(Default=FALSE) Give more output for use in debugging.}
 
 \item{TXf}{Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)}
 
@@ -146,6 +151,18 @@ ans3 <- projections(year=tmp$year,
           returntype='projections')
 
 ans3
+
+## example for IP SSM model
+ans4 <- projections(year=tmp$year,
+          Ihat=tmp$Ihat,sEI=tmp$sEI,
+          Nhat=tmp$Nhat,sEN=tmp$sEN,
+          Mhat=tmp$Mhat,sEM=tmp$sEM,
+          Phat=tmp$Mhat,sEP=tmp$sEM,
+          TXf = tmp$TXf,
+          modeltype = 'IP',
+          returntype='projections')
+
+ans4
 
 }
 \author{
