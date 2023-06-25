@@ -1,6 +1,6 @@
 # fort <img src="man/figures/logo.png" align="right" height="139" />
 
-R package for TB projections
+R package to forecast TB notifications, incidence, mortality, and prevalence
 
 
 ## License
