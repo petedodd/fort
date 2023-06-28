@@ -208,6 +208,19 @@ projections <- function(year,
       warning('Untreated CFR implied by data provided is pathological!\nUsing CFR = 0.5')
       CFR <- 0.5                       #safety
     }
+    ## calculate last CDR to carry fwd
+    CDR <- Nhat[maxidxnotna] / Ihat[maxidxnotna]
+    if(is.na(CDR)  | CDR<0 | CDR >1 ){
+      warning('Untreated CDR implied by data provided is pathological!\nUsing CDR = 0.7')
+      CDR <- 0.7                       #safety
+    }
+    ## replace incidence forecasts with version using N/CDR
+    RI[,I.sd:=I.sd/I.mid]        #make proportion
+    RI[(maxidxnotna+1):nrow(RI),
+       c('I.mid'):=RN[(maxidxnotna+1):nrow(RI),.(N.mid/CDR)]] #CDR-based incidence
+    RI[,I.sd:=I.sd * I.mid]        #make not a proportion
+    RI[(maxidxnotna+1):nrow(RI),
+       c('I.lo','I.hi'):=.(pmax(0,I.mid - 1.96 * I.sd),I.mid + 1.96 * I.sd)]
     ## fraction HIV+
     if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
       cat('Running HIV component...\n')
