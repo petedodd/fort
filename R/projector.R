@@ -200,7 +200,7 @@ projections <- function(year,
                                     sEM,nrep,runs=FALSE,1)})
     names(RM) <- c('year','M.mid','M.sd','M.lo','M.hi')
     ## calculate a version of the CFR to carry fwd
-    maxidxnotna <- sum(!is.na(Ihat * Nhat * Mhat)) #last index with all necessary data provided
+    maxidxnotna <- sum(!is.na(Ihat + Nhat + Mhat)) #last index with all necessary data provided
     cfrz <- (Mhat-TXf*Nhat) / (Ihat - Nhat) #(untreated mort'y)/(untreated inc)
     ## CFR <- cfrz[maxidxnotna] #last
     CFR <- mean(cfrz,na.rm=TRUE) #mean
