@@ -21,5 +21,5 @@ assuming the working directory is one level up from the repository clone.
 ## TODO
 
 - fix mortality offset
-- introduce Carel's suggestions in failsafe
+- testing for mortnotx version of failsafe and merge into main?
 - introduce hyperparameter for IP model
