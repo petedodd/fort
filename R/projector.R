@@ -199,6 +199,28 @@ projections <- function(year,
                                     Mhat-TXf*Nhat, #take off mortality on treatment (see below addon)
                                     sEM,nrep,runs=FALSE,1)})
     names(RM) <- c('year','M.mid','M.sd','M.lo','M.hi')
+    ## calculate a version of the CFR to carry fwd
+    maxidxnotna <- sum(!is.na(Ihat + Nhat + Mhat)) #last index with all necessary data provided
+    cfrz <- (Mhat-TXf*Nhat) / (Ihat - Nhat) #(untreated mort'y)/(untreated inc)
+    ## CFR <- cfrz[maxidxnotna] #last
+    CFR <- mean(cfrz,na.rm=TRUE) #mean
+    if(is.na(CFR) | CFR<0 | CFR >1){
+      warning('Untreated CFR implied by data provided is pathological!\nUsing CFR = 0.5')
+      CFR <- 0.5                       #safety
+    }
+    ## calculate last CDR to carry fwd
+    CDR <- Nhat[maxidxnotna] / Ihat[maxidxnotna]
+    if(is.na(CDR)  | CDR<0 | CDR >1 ){
+      warning('Untreated CDR implied by data provided is pathological!\nUsing CDR = 0.7')
+      CDR <- 0.7                       #safety
+    }
+    ## replace incidence forecasts with version using N/CDR
+    RI[,I.sd:=I.sd/I.mid]        #make proportion
+    RI[(maxidxnotna+1):nrow(RI),
+       c('I.mid'):=RN[(maxidxnotna+1):nrow(RI),.(N.mid/CDR)]] #CDR-based incidence
+    RI[,I.sd:=I.sd * I.mid]        #make not a proportion
+    RI[(maxidxnotna+1):nrow(RI),
+       c('I.lo','I.hi'):=.(pmax(0,I.mid - 1.96 * I.sd),I.mid + 1.96 * I.sd)]
     ## fraction HIV+
     if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
       cat('Running HIV component...\n')
@@ -225,13 +247,20 @@ projections <- function(year,
     ## HR interventions NOTE the notif one will have limited validity
     ANS[,c('I.mid','I.lo','I.hi'):=.(I.mid*HRi,I.lo*HRi,I.hi*HRi)] #OK
     ANS[,c('N.mid','N.lo','N.hi'):=.(N.mid*HRi*HRd,N.lo*HRi*HRd,N.hi*HRi*HRd)] #approx
-    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid/HRd,M.lo/HRd,M.hi/HRd)]             #approx
+    ## ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid/HRd,M.lo/HRd,M.hi/HRd)]             #approx
+    ## mortality approximation: Untreated' = (Incidence' - Notifications') x CFR
+    pb <- maxidxnotna+1; pe <- nrow(ANS)                           #begin/end of projection
+    ANS[pb:pe,M.mid:=(I.mid-N.mid)*CFR]                            #mean
+    ANS[,M.sdx3.92:=sqrt((I.lo-I.hi)^2+(N.lo-N.hi)^2)*CFR]         #uncertainty measure
+    ANS[pb:pe,c('M.lo','M.hi'):=.(pmax(0,M.mid-M.sdx3.92/2),M.mid+M.sdx3.92/2)]
+    ANS[,M.sdx3.92:=NULL]
     ## add treated mortality back
     ## project TXf
     if(any(is.na(TXf))){
       TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
     } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
-    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] #NOTE no extra uncertainty
+    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] # addon mortality on treatment
+    ## NOTE no extra uncertainty in line above
     ## computing this using duration assumption -
     ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
     tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
