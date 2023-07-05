@@ -208,9 +208,9 @@ arma::mat T_gn_ip(const unsigned int t, const arma::vec& alpha,
 
 
 
-// log-prior pdf for theta
+// log-prior pdf for theta WITH hyperparams
 // [[Rcpp::export]]
-double log_prior_pdf_ip(const arma::vec& theta) {
+double log_prior_pdf_ip_HP(const arma::vec& theta,const arma::vec& hyperparms) {
 
   // weakly informative half-N(0, 4) priors. 
   // Note that the sampling is on log-scale, 
@@ -222,20 +222,26 @@ double log_prior_pdf_ip(const arma::vec& theta) {
 
   // You can use R::dnorm and similar functions, see, e.g.
   // https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html
-  double noisehp = 1.0;
+  double noisehp = hyperparms(0);
+  double arhpmu = hyperparms(1);
+  double arhpsg = hyperparms(2);
+  double prhpmu = hyperparms(3);
+  double prhpsg = hyperparms(4);
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
     R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
-    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
-    R::dnorm(theta(4), -1, 0.1, true)+theta(4)*theta(4) // logitN w/ below
+    R::dnorm(theta(3), arhpmu, arhpsg, true)+   // phiIP  AR
+    R::dnorm(theta(4), prhpmu, prhpsg, true)+theta(4)*theta(4) // logitN w/ below
     - arma::accu(theta); //jacobian term
   // Rprintf("the value of log-likelihood : %f \n", log_pdf);
   return log_pdf;
 }
 
+
+
 // [[Rcpp::export]]
-Rcpp::List create_xptrs_ip() {
+Rcpp::List create_xptrs_ip(const arma::vec& hyperparms) {
 
   // typedef for a pointer of nonlinear function returning vec (T, Z)
   typedef arma::vec (*nvec_fnPtr)(const unsigned int t, 
@@ -252,8 +258,15 @@ Rcpp::List create_xptrs_ip() {
   // typedef for a pointer returning P1
   typedef arma::mat (*P1_fnPtr)(const arma::vec& theta, 
                                 const arma::vec& known_params);
+
   // typedef for a pointer of log-prior function
   typedef double (*prior_fnPtr)(const arma::vec& theta);
+
+  // typedef
+  typedef std::_Bind<double (*(std::_Placeholder<1>, arma::Col<double>))(const arma::Col<double>&, const arma::Col<double>&)>*   PartialApp;
+
+  // // create pointer to prior function
+  auto log_prior_pdf_ipa = std::bind(log_prior_pdf_ip_HP,std::placeholders::_1,hyperparms);
 
   return Rcpp::List::create(
                             Rcpp::Named("a1_fn_ip") = Rcpp::XPtr<a1_fnPtr>(new a1_fnPtr(&a1_fn_ip)),
@@ -265,6 +278,6 @@ Rcpp::List create_xptrs_ip() {
                             Rcpp::Named("Z_gn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&Z_gn_ip)),
                             Rcpp::Named("T_gn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&T_gn_ip)),
                             Rcpp::Named("log_prior_pdf_ip") = 
-                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ip)));
+                            Rcpp::XPtr<PartialApp>(new PartialApp (&log_prior_pdf_ipa)));
 }
 

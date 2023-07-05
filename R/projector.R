@@ -418,7 +418,11 @@ Cprojections <- function(year,
                     spsi = 0.3)
 
   known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
-
+  ## hyper parameters
+  hyper <- c(1.0,    #noise theta 0:2
+             -1,0.5, #theta3 logAR mu,sigma
+             -1,0.1  #theta4 logitPR mu,sigma
+             )
   ## for predictions
   future_known_tv_params <- known_tv_params[rep(nrow(Vhat),nahead),]
   ## NOTE interventions
@@ -435,9 +439,11 @@ Cprojections <- function(year,
 
   if(verbose) cat('Creating models...\n')
   ## --- create models
+  ## cfn <- here::here('src/ar1InP3i.cpp')
+  ## Rcpp::sourceCpp(cfn)
   ## model pointers
   pntrsrw <- create_xptrs() #create pointers for rwI model
-  pntrsip <- create_xptrs_ip() #create pointers for IP model
+  pntrsip <- create_xptrs_ip(hyper) #create pointers for IP model TODO
 
   if(verbose){
     cat('Testing pointers:\n')
@@ -460,6 +466,8 @@ Cprojections <- function(year,
     (tdZ <- Z_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
     (tT <- T_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
     (tdT <- T_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    ## log_prior_pdf_ip(initial_theta_ip)
+    ## log_prior_pdf_ip_HP(initial_theta_ip,hyper)
     log_prior_pdf_ip(initial_theta_ip)
     cat('...done.\n')
   }
@@ -474,7 +482,7 @@ Cprojections <- function(year,
                             n_states = 7, n_etas = 4,
                             state_names = tt3SNMZ)
   ## IP
-  modelip <- ssm_nlg(y = Yhat,
+  modelip <- bssm::ssm_nlg(y = Yhat,
                    a1=pntrsip$a1, P1 = pntrsip$P1, #TODO why not _fn_ip?
                    Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
                    T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,

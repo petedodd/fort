@@ -193,17 +193,17 @@ namespace fort {
         return Rcpp::as<arma::mat >(rcpp_result_gen);
     }
 
-    inline double log_prior_pdf_ip(const arma::vec& theta) {
-        typedef SEXP(*Ptr_log_prior_pdf_ip)(SEXP);
-        static Ptr_log_prior_pdf_ip p_log_prior_pdf_ip = NULL;
-        if (p_log_prior_pdf_ip == NULL) {
-            validateSignature("double(*log_prior_pdf_ip)(const arma::vec&)");
-            p_log_prior_pdf_ip = (Ptr_log_prior_pdf_ip)R_GetCCallable("fort", "_fort_log_prior_pdf_ip");
+    inline double log_prior_pdf_ip_HP(const arma::vec& theta, const arma::vec& hyperparms) {
+        typedef SEXP(*Ptr_log_prior_pdf_ip_HP)(SEXP,SEXP);
+        static Ptr_log_prior_pdf_ip_HP p_log_prior_pdf_ip_HP = NULL;
+        if (p_log_prior_pdf_ip_HP == NULL) {
+            validateSignature("double(*log_prior_pdf_ip_HP)(const arma::vec&,const arma::vec&)");
+            p_log_prior_pdf_ip_HP = (Ptr_log_prior_pdf_ip_HP)R_GetCCallable("fort", "_fort_log_prior_pdf_ip_HP");
         }
         RObject rcpp_result_gen;
         {
             RNGScope RCPP_rngScope_gen;
-            rcpp_result_gen = p_log_prior_pdf_ip(Shield<SEXP>(Rcpp::wrap(theta)));
+            rcpp_result_gen = p_log_prior_pdf_ip_HP(Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(hyperparms)));
         }
         if (rcpp_result_gen.inherits("interrupted-error"))
             throw Rcpp::internal::InterruptedException();
@@ -214,17 +214,17 @@ namespace fort {
         return Rcpp::as<double >(rcpp_result_gen);
     }
 
-    inline Rcpp::List create_xptrs_ip() {
-        typedef SEXP(*Ptr_create_xptrs_ip)();
+    inline Rcpp::List create_xptrs_ip(const arma::vec& hyperparms) {
+        typedef SEXP(*Ptr_create_xptrs_ip)(SEXP);
         static Ptr_create_xptrs_ip p_create_xptrs_ip = NULL;
         if (p_create_xptrs_ip == NULL) {
-            validateSignature("Rcpp::List(*create_xptrs_ip)()");
+            validateSignature("Rcpp::List(*create_xptrs_ip)(const arma::vec&)");
             p_create_xptrs_ip = (Ptr_create_xptrs_ip)R_GetCCallable("fort", "_fort_create_xptrs_ip");
         }
         RObject rcpp_result_gen;
         {
             RNGScope RCPP_rngScope_gen;
-            rcpp_result_gen = p_create_xptrs_ip();
+            rcpp_result_gen = p_create_xptrs_ip(Shield<SEXP>(Rcpp::wrap(hyperparms)));
         }
         if (rcpp_result_gen.inherits("interrupted-error"))
             throw Rcpp::internal::InterruptedException();

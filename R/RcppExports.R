@@ -33,12 +33,12 @@ T_gn_ip <- function(t, alpha, theta, known_params, known_tv_params) {
     .Call(`_fort_T_gn_ip`, t, alpha, theta, known_params, known_tv_params)
 }
 
-log_prior_pdf_ip <- function(theta) {
-    .Call(`_fort_log_prior_pdf_ip`, theta)
+log_prior_pdf_ip_HP <- function(theta, hyperparms) {
+    .Call(`_fort_log_prior_pdf_ip_HP`, theta, hyperparms)
 }
 
-create_xptrs_ip <- function() {
-    .Call(`_fort_create_xptrs_ip`)
+create_xptrs_ip <- function(hyperparms) {
+    .Call(`_fort_create_xptrs_ip`, hyperparms)
 }
 
 a1_fn <- function(theta, known_params) {
