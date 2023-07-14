@@ -13,13 +13,33 @@ R package to forecast TB notifications, incidence, mortality, and prevalence
 
 While not public, the easiest approach is to clone the repository, and then use:
 
-`devtools::install('fort')`
+```R
+devtools::install('fort')
+```
+
 
 assuming the working directory is one level up from the repository clone.
+
+## API
+
+A plumber API is now defined in inst/plumber.
+
+This can be run using:
+
+```R
+library(plumber)
+root <- plumb_api(package='fort',name='tbstatisticalserver')
+pr_run(root)
+```
+
+The server can be tested using the json data in the same folder:
+
+```bash
+curl -X "POST" "http://127.0.0.1:8021/projection" -H 'Content-Type: application/json' -d @projection.json
+```
 
 
 ## TODO
 
 - fix mortality offset
-- testing for mortnotx version of failsafe and merge into main?
 - introduce hyperparameter for IP model
