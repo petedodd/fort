@@ -259,14 +259,23 @@ Rcpp::List create_xptrs_ip(const arma::vec& hyperparms) {
   typedef arma::mat (*P1_fnPtr)(const arma::vec& theta, 
                                 const arma::vec& known_params);
 
-  // typedef for a pointer of log-prior function
-  typedef double (*prior_fnPtr)(const arma::vec& theta);
-
   // typedef
-  typedef std::_Bind<double (*(std::_Placeholder<1>, arma::Col<double>))(const arma::Col<double>&, const arma::Col<double>&)>*   PartialApp;
+  typedef double PartialFn(const arma::vec& theta);
+  typedef PartialFn* PartialFnPtr;
+  // create lambda to prior function
+  // auto log_prior_pdf_ipa = [](const arma::vec& theta) {
+  //   return log_prior_pdf_ip_HP(std::forward<const arma::vec&>(theta),hyperparms);
+  // };
 
-  // // create pointer to prior function
-  auto log_prior_pdf_ipa = std::bind(log_prior_pdf_ip_HP,std::placeholders::_1,hyperparms);
+  // new version
+  PartialFn* log_prior_pdf_ipa = new auto([&](const arma::vec& theta) {
+    return log_prior_pdf_ip_HP(std::forward<const arma::vec&>(theta), hyperparms);
+  });
+
+
+  // Pointer to prior fn with PartialFn Prototype
+  PartialFn* log_prior_pdf_ipa_ptr = log_prior_pdf_ipa;
+  // PartialFn* foo = log_prior_pdf_ip;
 
   return Rcpp::List::create(
                             Rcpp::Named("a1_fn_ip") = Rcpp::XPtr<a1_fnPtr>(new a1_fnPtr(&a1_fn_ip)),
@@ -277,7 +286,10 @@ Rcpp::List create_xptrs_ip(const arma::vec& hyperparms) {
                             Rcpp::Named("R_fn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&R_fn_ip)),
                             Rcpp::Named("Z_gn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&Z_gn_ip)),
                             Rcpp::Named("T_gn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&T_gn_ip)),
-                            Rcpp::Named("log_prior_pdf_ip") = 
-                            Rcpp::XPtr<PartialApp>(new PartialApp (&log_prior_pdf_ipa)));
+                            Rcpp::Named("log_prior_pdf_ip") =
+                            // Rcpp::XPtr<PartialFnPtr>(new PartialFnPtr(&log_prior_pdf_ipa_ptr))
+                            Rcpp::XPtr<PartialFnPtr>(new PartialFnPtr(log_prior_pdf_ipa))
+                            // Rcpp::XPtr<PartialApp>(new PartialApp (&log_prior_pdf_ipa))
+                            );
 }
 
