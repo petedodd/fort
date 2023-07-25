@@ -149,7 +149,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'           Phat=tmp$Mhat,sEP=tmp$sEM,
 ##'           TXf = tmp$TXf,
 ##'           modeltype = 'rwI',
-##'           returntype='projections')
+##'           output='projection')
 ##'
 ##' ans3
 ##'
@@ -161,7 +161,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'           Phat=tmp$Mhat,sEP=tmp$sEM,
 ##'           TXf = tmp$TXf,
 ##'           modeltype = 'IP',
-##'           returntype='projections')
+##'           output='projection')
 ##'
 ##' ans4
 ##'
@@ -495,6 +495,7 @@ Cprojections <- function(year,
     model <- modelip
   }
 
+  if(verbose) cat('Using return type: ',returntype,'\n')
   if(verbose) cat('Starting inference...\n')
 
   ## inference
@@ -537,6 +538,7 @@ Cprojections <- function(year,
   if(returntype=='futureonly'){
     ## No action needed
     cat('future only, no summary...\n')
+    return(outs) #BUG if used in wrapper?
   }
   if(returntype=='projection'){
     cat('projection fit summary...\n')
@@ -564,10 +566,12 @@ Cprojections <- function(year,
     inputs.a <- merge(inputs.a,inputs.h,id=c('time'))
     ## ouput
     outs <- rbind(inputs.a,outs)
+    return(outs)
   }
   if(returntype=='fit'){
-    cat('adding fit summary...\n')
-    outs <- rbind(outsf,outs) #combine with past fit
+    cat('adding fit summary...\n') #BUG when post-processed in wrapper
+    if(verbose) print(outsf)
+    return(outsf)
+    ## outs <- rbind(outsf,outs) #combine with past fit
   }
-  outs
 }
