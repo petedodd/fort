@@ -41,5 +41,4 @@ curl -X "POST" "http://127.0.0.1:8021/projection" -H 'Content-Type: application/
 
 ## TODO
 
-- fix mortality offset
 - introduce hyperparameter for IP model
