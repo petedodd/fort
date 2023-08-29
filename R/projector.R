@@ -388,11 +388,10 @@ Cprojections <- function(year,
   NoverI <- tmp$Nhat[1]/tmp$Ihat[1]
 
   ## transformations
-  Yhat <- getLNmu(Yhat,Vhat)
-  Vhat <- getLNsig(Yhat,Vhat)
-  Vhat <- Vhat/sfac
+  Yhat <- log(Yhat)
+  Vhat <- Yhat
   Vhat[,c(1,3,4)] <- 0.05
-  Vhat[,2] <- 0.2
+  Vhat[,2] <- 0.2 #prevalence
 
   ## Initial states:
   IS <- c(log(c(Ihat[1],Phat[1],Nhat[1],Mhat[1])),

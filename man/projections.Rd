@@ -148,7 +148,7 @@ ans3 <- projections(year=tmp$year,
           Phat=tmp$Mhat,sEP=tmp$sEM,
           TXf = tmp$TXf,
           modeltype = 'rwI',
-          returntype='projections')
+          output='projection')
 
 ans3
 
@@ -160,7 +160,7 @@ ans4 <- projections(year=tmp$year,
           Phat=tmp$Mhat,sEP=tmp$sEM,
           TXf = tmp$TXf,
           modeltype = 'IP',
-          returntype='projections')
+          output='projection')
 
 ans4
 
