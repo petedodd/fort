@@ -385,7 +385,7 @@ Cprojections <- function(year,
   sfac <- 10
   Yhat <- cbind(Ihat,Phat,Nhat,Mhat)
   Vhat <- cbind(sEI,sEI*5,Nhat*0.1,Mhat)
-  NoverI <- tmp$Nhat[1]/tmp$Ihat[1]
+  NoverI <- Nhat[1]/Ihat[1]
 
   ## transformations
   Yhat <- log(Yhat)
