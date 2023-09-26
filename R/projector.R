@@ -296,6 +296,7 @@ projections <- function(year,
                  modeltype=modeltype,
                  verbose=verbose
                  )
+    if(verbose) cat('...Cprojections returned OK...\n')
   }
   if(modeltype!='failsafe'){
     ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
