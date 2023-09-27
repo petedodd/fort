@@ -484,7 +484,7 @@ Cprojections <- function(year,
                             n_states = 7, n_etas = 4,
                             state_names = tt3SNMZ)
   ## IP
-  modelip <- ssm_nlg(y = Yhat,
+  modelip <- bssm::ssm_nlg(y = Yhat,
                    a1=pntrsip$a1, P1 = pntrsip$P1, #TODO why not _fn_ip?
                    Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
                    T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
@@ -579,7 +579,7 @@ Cprojections <- function(year,
     return(outs)
   }
   if(returntype=='fit'){
-    cat('adding fit summary...\n') #BUG when post-processed in wrapper
+    cat('adding fit summary...\n')
     ## if(verbose) print(outsf)
     return(outsf)
     ## outs <- rbind(outsf,outs) #combine with past fit
