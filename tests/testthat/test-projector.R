@@ -1,8 +1,7 @@
 test_that("projection using scenario A returns I.mid of 290.58552", {
   # Arrange
-  
-  data <- jsonlite::fromJSON('../../inst/plumber/tbstatisticalserver/projection.json')
-  
+  data <- jsonlite::fromJSON(system.file("plumber/tbstatisticalserver/projection.json",
+                                         package = "fort"))
   set.seed(123)
 
   # Act

@@ -67,7 +67,8 @@ Main projection function to be exported
 .. content for \details{Cprojections} ..
 }
 \examples{
-TODO
+
+1+1 #TODO
 
 }
 \author{

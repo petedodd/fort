@@ -111,19 +111,23 @@ sEM = c(5.50426791938695, 4.99926659859985, 4.62031120755379,
 
 # Default projections using failsafe method:
 
+\dontrun{
 ans0 <- projections(tmp$year,tmp$Ihat,tmp$sEI,tmp$Nhat,tmp$sEN,tmp$Mhat,tmp$sEM)
+}
 
 
 # Create some treatment CFR data:
 tmp$TXf <- tmp$Nhat/1e3
 
 # Failsafe run using treatment CFR data:
+\dontrun{
 ans1 <- projections(year=tmp$year,
          Ihat=tmp$Ihat,sEI=tmp$sEI,
          Nhat=tmp$Nhat,sEN=tmp$sEN,
          Mhat=tmp$Mhat,sEM=tmp$sEM,
          Phat=tmp$Mhat,sEP=tmp$sEM,
          TXf = tmp$TXf)
+}
 
 # Create intervention data:
 HRd <- HRi <- ORt <- rep(1,length(tmp$Nhat))
@@ -131,6 +135,7 @@ HRd[is.na(tmp$Nhat)] <- HRi[is.na(tmp$Nhat)] <- 1.1
 ORt[is.na(tmp$Nhat)] <- 0.7
 
 # Failsafe run with interventions:
+\dontrun{
 ans2 <- projections(year=tmp$year,
          Ihat=tmp$Ihat,sEI=tmp$sEI,
          Nhat=tmp$Nhat,sEN=tmp$sEN,
@@ -139,8 +144,10 @@ ans2 <- projections(year=tmp$year,
          TXf = tmp$TXf,ORt=ORt,
          HRd=HRd,HRi=HRi)
 ans2
+}
 
 ## example for rwI SSM model
+\dontrun{
 ans3 <- projections(year=tmp$year,
           Ihat=tmp$Ihat,sEI=tmp$sEI,
           Nhat=tmp$Nhat,sEN=tmp$sEN,
@@ -151,8 +158,10 @@ ans3 <- projections(year=tmp$year,
           output='projection')
 
 ans3
+}
 
 ## example for IP SSM model
+\dontrun{
 ans4 <- projections(year=tmp$year,
           Ihat=tmp$Ihat,sEI=tmp$sEI,
           Nhat=tmp$Nhat,sEN=tmp$sEN,
@@ -163,6 +172,7 @@ ans4 <- projections(year=tmp$year,
           output='projection')
 
 ans4
+}
 
 }
 \author{
