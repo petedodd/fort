@@ -1,5 +1,11 @@
 # fort <img src="man/figures/logo.png" align="right" height="139" />
 
+
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/petedodd/fort/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/petedodd/fort/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
+
 R package to forecast TB notifications, incidence, mortality, and prevalence
 
 
