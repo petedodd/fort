@@ -296,7 +296,8 @@ projections <- function(year,
                  logORpsi=logORpsi,
                  returntype=output,
                  modeltype=modeltype,
-                 verbose=verbose
+                 verbose=verbose,
+                 ...
                  )
     if(verbose) cat('...Cprojections returned OK...\n')
   }
@@ -374,11 +375,6 @@ Cprojections <- function(year,
 
   cat('...nahead = ',nahead,'...\n')
 
-  ## ## completions NOTE different naming to above!
-  ## if(!'logIRR' %in% names(arguments)) logIRR <- rep(0,nahead)      #IRR on incidence
-  ## if(!'logIRRdelta' %in% names(arguments)) logIRRdelta <- rep(0.0,nahead) #detection
-  ## if(!'logORpsi' %in% names(arguments)) logORpsi <- rep(0,nahead)    #deaths off treatment - not for use
-
   ## switch to fit if nahead==0
   if(nahead==0 & returntype=='projection'){
     returntype <- 'fit'
@@ -393,40 +389,82 @@ Cprojections <- function(year,
   }
 
   ## processing data
-  sfac <- 10
   Yhat <- cbind(Ihat,Phat,Nhat,Mhat)
   Vhat <- cbind(sEI,sEI*5,Nhat*0.1,Mhat)
   NoverI <- Nhat[1]/Ihat[1]
 
-  ## transformations
+  ## transformations NOTE reconsider
   Yhat <- log(Yhat)
   Vhat <- Yhat
   Vhat[,c(1,3,4)] <- 0.05
   Vhat[,2] <- 0.2 #prevalence
+  if('override' %in% names(arguments)){
+    if('Vhat' %in% names(override)){
+      if(override[['Vhat']]=='literal'){
+        Vhat <- cbind(sEI,sEP,sEN,sEM)
+        if(verbose) cat('...** overriding Vhat **...\n')
+      }
+    }
+  }
 
   ## Initial states:
   IS <- c(log(c(Ihat[1],Phat[1],Nhat[1],Mhat[1])),
                  c(0.1,0.1,0.1,0.1))
+  if('override' %in% names(arguments)){
+    if('IS' %in% names(override)){
+      IS <- override[['IS']]
+      if(verbose) cat('...** overriding IS **...\n')
+    }
+  }
   names(IS) <- c("mI0","mP0","mN0","mD0","sI0","sP0","sN0","sD0")
-  sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
+  if(verbose) cat('...initial state: IS = \n')
+  if(verbose) print(IS)
 
+  ## other prior parameters
+  sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
+  momega0 <- -1.1
+  mpsi0 <- logit(0.5)## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
+  somega0 = 0.7
+  spsi0 <- 0.3
+
+  ## initial thetas
   initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1) #default rwI
+  if('override' %in% names(arguments)){
+    if('initial_theta' %in% names(override)){
+      initial_theta <- override[['initial_theta']]
+      if(verbose) cat('...** overriding initial_theta **...\n')
+    }
+  }
   initial_theta_ip <- c(logSI = -1,logsdelta=-1,logsomega=-1,logphiP=-1,logitpr=-1) #IP
+  if('override' %in% names(arguments)){
+    if('initial_theta_ip' %in% names(override)){
+      initial_theta_ip <- override[['initial_theta_ip']]
+      if(verbose) cat('...** overriding initial_theta_ip **...\n')
+    }
+  }
   known_params <- c(mI0 = (IS['mI0']),
                     mP0 = (IS['mP0']),
                     mN0 = (IS['mN0']),
                     mD0 = (IS['mD0']),
-                    momega = -1.1,
+                    momega = momega0,
                     mdelta = log(NoverI), #N/I as proxy for N/P
-                    mpsi = logit(0.5),## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
+                    mpsi = mpsi0,## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
                     sI0 = (IS['sI0']), #NOTE
                     sP0 = (IS['sP0']),
                     sN0 = (IS['sN0']),
                     sD0 = (IS['sD0']),
-                    somega = 0.7,
+                    somega = somega0,
                     sdelta = sdelta0,
-                    spsi = 0.3)
-
+                    spsi = spsi0)
+  if('override' %in% names(arguments)){
+    if('nathist' %in% names(override)){
+      for(nm in names(override[['nathist']])){ #loop over these
+        if(verbose) cat('...** overriding ',nm,' **...\n')
+        if(!nm %in% names(known_params)) stop('nathist override not found in known_params: probably not the behaviour you were looking for!')
+        known_params[[nm]] <- override[['nathist']][[nm]]
+      }
+    }
+  }
   known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
 
   ## for predictions
