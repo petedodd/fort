@@ -283,6 +283,8 @@ projections <- function(year,
     ## make guess for P
     Phat <- Ihat; sEP <- 2*sEI
     didx <- 1:lastd #data range
+    if(verbose) cat('...nahead=',nahead,'\n')
+    if(verbose) cat('...lastd=',lastd,'\n')
     ANS <- Cprojections(year[didx],
                  Ihat[didx],sEI[didx],
                  Nhat[didx],sEN[didx],
@@ -301,12 +303,13 @@ projections <- function(year,
   if(modeltype!='failsafe'){
     ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
                                                  'Prevalence','Deaths','time')],
-                 time ~ variable,value.var=c('mid','lo','hi'))
+                             time ~ variable,value.var=c('mid','lo','hi'))
     names(ANS) <- c('year',
                     'I.mid','N.mid','M.mid','P.mid',
                     'I.lo','N.lo','M.lo','P.lo',
                     'I.hi','N.hi','M.hi','P.hi')
     ANS$year <- year[ANS$year]
+    ANS <- ANS[!is.na(year)] #removes 1 ahead if 'fit'
     ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
            .((I.hi-I.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92)]
     setcolorder(ANS,neworder = c("year",
@@ -370,10 +373,17 @@ Cprojections <- function(year,
   list2env(arguments,envir = environment())                   #boost ... to this scope
 
   cat('...nahead = ',nahead,'...\n')
-  ## completions NOTE different naming to above!
-  if(!'logIRR' %in% names(arguments)) logIRR <- rep(0,nahead)      #IRR on incidence
-  if(!'logIRRdelta' %in% names(arguments)) logIRRdelta <- rep(0.0,nahead) #detection
-  if(!'logORpsi' %in% names(arguments)) logORpsi <- rep(0,nahead)    #deaths off treatment - not for use
+
+  ## ## completions NOTE different naming to above!
+  ## if(!'logIRR' %in% names(arguments)) logIRR <- rep(0,nahead)      #IRR on incidence
+  ## if(!'logIRRdelta' %in% names(arguments)) logIRRdelta <- rep(0.0,nahead) #detection
+  ## if(!'logORpsi' %in% names(arguments)) logORpsi <- rep(0,nahead)    #deaths off treatment - not for use
+
+  ## switch to fit if nahead==0
+  if(nahead==0 & returntype=='projection'){
+    returntype <- 'fit'
+    cat('...NB changing returntype to fit since nahead==0...\n')
+  }
 
   ## model choice safety
   if(!modeltype %in% c('rwI','IP')){
@@ -570,7 +580,7 @@ Cprojections <- function(year,
   }
   if(returntype=='fit'){
     cat('adding fit summary...\n') #BUG when post-processed in wrapper
-    if(verbose) print(outsf)
+    ## if(verbose) print(outsf)
     return(outsf)
     ## outs <- rbind(outsf,outs) #combine with past fit
   }
