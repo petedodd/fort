@@ -14,6 +14,10 @@ projections(
   sEM,
   Phat,
   sEP,
+  TXf,
+  HRd,
+  HRi,
+  ORt,
   ...,
   nrep = 500,
   output = "projection",
@@ -40,6 +44,16 @@ projections(
 
 \item{sEP}{Prevalence uncertainty as SD (NA if projection/imputation needed)}
 
+\item{TXf}{Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)}
+
+\item{HRd}{Hazard ratios to apply to detection hazard (assumed 1 if not given)}
+
+\item{HRi}{Hazard ratios to apply to incidence (assumed 1 if not given)}
+
+\item{ORt}{Hazard ratios to apply to treatment fatality (assumed 1 if not given)}
+
+\item{...}{Additional parameters to help tune away from defaults}
+
 \item{nrep}{number of replicates used - NOTE likely to be temporary}
 
 \item{output}{Return data + projection ('projection') or fit + projection ('fit')  or futureonly}
@@ -52,14 +66,6 @@ projections(
 }}
 
 \item{verbose}{(Default=FALSE) Give more output for use in debugging.}
-
-\item{TXf}{Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)}
-
-\item{HRd}{Hazard ratios to apply to detection hazard (assumed 1 if not given)}
-
-\item{HRi}{Hazard ratios to apply to incidence (assumed 1 if not given)}
-
-\item{ORt}{Hazard ratios to apply to treatment fatality (assumed 1 if not given)}
 }
 \value{
 A data.frame/data.table with the projections and uncertainty

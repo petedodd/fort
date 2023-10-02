@@ -40,6 +40,8 @@ Cprojections(
 
 \item{sEP}{Prevalence uncertainty as SD (NA if projection/imputation needed)}
 
+\item{...}{Additional parameters to help tune away from defaults}
+
 \item{nahead}{how many years to project
 \itemize{
 \item `futureonly': (default) only returns projection

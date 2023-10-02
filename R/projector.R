@@ -66,6 +66,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' @param HRi Hazard ratios to apply to incidence (assumed 1 if not given)
 ##' @param ORt Hazard ratios to apply to treatment fatality (assumed 1 if not given)
 ##' @param nrep number of replicates used - NOTE likely to be temporary
+##' @param ... Additional parameters to help tune away from defaults
 ##' @param output Return data + projection ('projection') or fit + projection ('fit')  or futureonly
 ##' @param modeltype Which version to use:
 ##'   * `failsafe': the failsafe model using simulation independent timeseries models
@@ -187,6 +188,7 @@ projections <- function(year,
                         Nhat,sEN,
                         Mhat,sEM,
                         Phat,sEP,
+                        TXf,HRd,HRi,ORt,
                         ...,
                         nrep=500,
                         output='projection', #TODO
@@ -355,6 +357,7 @@ projections <- function(year,
 ##' @param Mhat Deaths midpoints (NA if projection/imputation needed)
 ##' @param sEM Deaths uncertainty as SD (NA if projection/imputation needed)
 ##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
+##' @param ... Additional parameters to help tune away from defaults
 ##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
 ##' @param returntype Determines what is returned if projecting
 ##' @param nahead how many years to project
