@@ -16,13 +16,13 @@
 // [[Rcpp::export]]
 arma::vec a1_fn(const arma::vec& theta, const arma::vec& known_params) {
   arma::vec a1(7);
-  a1(0) = known_params(0);
-  a1(1) = known_params(1);
-  a1(2) = known_params(2);
-  a1(3) = known_params(3);
-  a1(4) = known_params(4);
-  a1(5) = known_params(5);
-  a1(6) = known_params(6);
+  a1(0) = known_params(0);      // I
+  a1(1) = known_params(1);      // P
+  a1(2) = known_params(2);      // N
+  a1(3) = known_params(3);      // D
+  a1(4) = known_params(4);      // omega
+  a1(5) = known_params(5);      // delta
+  a1(6) = known_params(6);      // psi
   return a1;
 }
 
@@ -30,13 +30,13 @@ arma::vec a1_fn(const arma::vec& theta, const arma::vec& known_params) {
 // [[Rcpp::export]]
 arma::mat P1_fn(const arma::vec& theta, const arma::vec& known_params) {
   arma::mat P1(7, 7, arma::fill::zeros);
-  P1(0,0) = std::pow(known_params(7),2);
-  P1(1,1) = std::pow(known_params(8),2);
-  P1(2,2) = std::pow(known_params(9),2);
-  P1(3,3) = std::pow(known_params(10),2);
-  P1(4,4) = std::pow(known_params(11),2);
-  P1(5,5) = std::pow(known_params(12),2);
-  P1(6,6) = std::pow(known_params(13),2);
+  P1(0,0) = std::pow(known_params(7),2); // I
+  P1(1,1) = std::pow(known_params(8),2); // P
+  P1(2,2) = std::pow(known_params(9),2); // N
+  P1(3,3) = std::pow(known_params(10),2); // D
+  P1(4,4) = std::pow(known_params(11),2); // omega
+  P1(5,5) = std::pow(known_params(12),2); // delta
+  P1(6,6) = std::pow(known_params(13),2); // psi
   return P1;
 }
 

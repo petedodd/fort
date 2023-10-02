@@ -72,6 +72,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'   * `failsafe': the failsafe model using simulation independent timeseries models
 ##'   * `rwI': SSM with random walk for incidence. NOTE no indirect impact
 ##'   * `IP': SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence).
+##' @param returninternalfit (default FALSE) return the internal estimated states (only when returntype=='fit')
 ##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @importFrom stats deltat frequency quantile rnorm sd ts tsp
@@ -193,6 +194,7 @@ projections <- function(year,
                         nrep=500,
                         output='projection', #TODO
                         modeltype='failsafe',
+                        returninternalfit=FALSE,
                         verbose=FALSE
                         ){
   ## argument management
@@ -320,14 +322,25 @@ projections <- function(year,
                  )
     if(verbose) cat('...Cprojections returned OK...\n')
   }
-  if(modeltype!='failsafe'){
+  if(modeltype!='failsafe' & !returninternalfit){
     ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
                                                  'Prevalence','Deaths','time')],
                              time ~ variable,value.var=c('mid','lo','hi'))
-    names(ANS) <- c('year',
-                    'I.mid','N.mid','M.mid','P.mid',
-                    'I.lo','N.lo','M.lo','P.lo',
-                    'I.hi','N.hi','M.hi','P.hi')
+    ## safe renaming
+    n <- names(ANS)
+    names(ANS)[n=='time'] <- 'year'
+    names(ANS)[n=='mid_Incidence'] <- 'I.mid'
+    names(ANS)[n=='lo_Incidence'] <- 'I.lo'
+    names(ANS)[n=='hi_Incidence'] <- 'I.hi'
+    names(ANS)[n=='mid_Notifications'] <- 'N.mid'
+    names(ANS)[n=='lo_Notifications'] <- 'N.lo'
+    names(ANS)[n=='hi_Notifications'] <- 'N.hi'
+    names(ANS)[n=='mid_Deaths'] <- 'M.mid'
+    names(ANS)[n=='lo_Deaths'] <- 'M.lo'
+    names(ANS)[n=='hi_Deaths'] <- 'M.hi'
+    names(ANS)[n=='mid_Prevalence'] <- 'P.mid'
+    names(ANS)[n=='lo_Prevalence'] <- 'P.lo'
+    names(ANS)[n=='hi_Prevalence'] <- 'P.hi'
     ANS$year <- year[ANS$year]
     ANS <- ANS[!is.na(year)] #removes 1 ahead if 'fit'
     ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
@@ -448,7 +461,7 @@ Cprojections <- function(year,
   sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
   momega0 <- -1.1
   mpsi0 <- logit(0.5)## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
-  somega0 = 0.7
+  somega0 <- 0.7
   spsi0 <- 0.3
 
   ## initial thetas
@@ -515,7 +528,12 @@ Cprojections <- function(year,
     cat('Testing pointers:\n')
     cat('rwI...\n')
     (ta1 <- a1_fn(initial_theta,known_params))
+    print(c(ta1))
     (tP1 <- P1_fn(initial_theta,known_params))
+    print(c(diag(tP1)))
+    tmp <- rep(0,7)
+    for(i in 1:7) tmp[i] <- exparz(ta1[i],sqrt(tP1[i]))$mn
+    print(tmp)
     (tH <- H_fn(1,state,initial_theta,known_params,known_tv_params))
     (tR <- R_fn(1,state,initial_theta,known_params,known_tv_params))
     (tZ <- Z_fn(1,state,initial_theta,known_params,known_tv_params))
@@ -585,7 +603,6 @@ Cprojections <- function(year,
     outsf <- rbind(outsf,tmpof)
     outsf <- outsf[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
   }
-
   if(verbose) cat('Making predictions...\n')
 
   ## predict
@@ -641,8 +658,7 @@ Cprojections <- function(year,
     return(outs)
   }
   if(returntype=='fit'){
-    cat('adding fit summary...\n')
-    ## if(verbose) print(outsf)
+    cat('returning fit summary...\n')
     return(outsf)
     ## outs <- rbind(outsf,outs) #combine with past fit
   }

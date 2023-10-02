@@ -22,6 +22,7 @@ projections(
   nrep = 500,
   output = "projection",
   modeltype = "failsafe",
+  returninternalfit = FALSE,
   verbose = FALSE
 )
 }
@@ -64,6 +65,8 @@ projections(
 \item `rwI': SSM with random walk for incidence. NOTE no indirect impact
 \item `IP': SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence).
 }}
+
+\item{returninternalfit}{(default FALSE) return the internal estimated states (only when returntype=='fit')}
 
 \item{verbose}{(Default=FALSE) Give more output for use in debugging.}
 }
