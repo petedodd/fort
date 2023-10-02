@@ -7,15 +7,15 @@
 noisyex(yrz, mnz, sdz, nrep, runs = TRUE, trnsfm = 0)
 }
 \arguments{
-\item{yrz}{}
+\item{yrz}{vector of years}
 
-\item{mnz}{}
+\item{mnz}{vector of means}
 
-\item{sdz}{}
+\item{sdz}{vector of SDs}
 
-\item{nrep}{}
+\item{nrep}{number of replicates to use}
 
-\item{runs}{}
+\item{runs}{logical: whether to return individual run data}
 
 \item{trnsfm}{0 = no transformation; 1 = log transformation; 2 = logit transformation}
 }
@@ -23,10 +23,10 @@ noisyex(yrz, mnz, sdz, nrep, runs = TRUE, trnsfm = 0)
 data.table of results
 }
 \description{
-.. content for \description{} (no empty lines) ..
+Utility For Simulation-based Structural Time Series Fitting & Projection
 }
 \details{
-.. content for \details{} ..
+Samples timeseries within uncertainty bounds and uses a Kalman filter from imputeTS to project.
 }
 \author{
 Pete Dodd

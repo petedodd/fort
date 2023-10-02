@@ -65,10 +65,10 @@ projections(
 A data.frame/data.table with the projections and uncertainty
 }
 \description{
-Main projection function to be exported
+Main Projection Function
 }
 \details{
-.. content for \details{projections} ..
+Top level main function for use in generating projections of TB notifications, incidence, prevalence and mortality.
 }
 \examples{
 
@@ -153,7 +153,8 @@ ans3 <- projections(year=tmp$year,
           Nhat=tmp$Nhat,sEN=tmp$sEN,
           Mhat=tmp$Mhat,sEM=tmp$sEM,
           Phat=tmp$Mhat,sEP=tmp$sEM,
-          TXf = tmp$TXf,
+          TXf = tmp$TXf,ORt=ORt,
+          HRd=HRd,HRi=HRi,
           modeltype = 'rwI',
           output='projection')
 

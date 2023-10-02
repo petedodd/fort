@@ -61,10 +61,10 @@ Cprojections(
 A data.frame/data.table with the projections and uncertainty
 }
 \description{
-Main projection function to be exported
+SSM-based Projections
 }
 \details{
-.. content for \details{Cprojections} ..
+This wraps the SSM-based models and projections using BSSM.
 }
 \examples{
 

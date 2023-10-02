@@ -8,5 +8,6 @@
 
 library(testthat)
 library(fort)
+library(jsonlite)
 
 test_check("fort")

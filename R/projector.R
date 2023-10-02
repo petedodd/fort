@@ -1,21 +1,23 @@
 ## currently slow simulation-based projector
 
 ## not exported as temporary: a utility function used to create noisy data replicates
-##' .. content for \description{} (no empty lines) ..
+##' Utility For Simulation-based Structural Time Series Fitting & Projection
 ##'
-##' .. content for \details{} ..
+##' Samples timeseries within uncertainty bounds and uses a Kalman filter from imputeTS to project.
 ##' @title Simulating and fitting replicates with structural model
-##' @param yrz 
-##' @param mnz 
-##' @param sdz 
-##' @param nrep 
-##' @param runs 
+##' @param yrz vector of years
+##' @param mnz vector of means
+##' @param sdz vector of SDs
+##' @param nrep number of replicates to use
+##' @param runs logical: whether to return individual run data
 ##' @param trnsfm 0 = no transformation; 1 = log transformation; 2 = logit transformation
 ##' @return data.table of results
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @import imputeTS
 noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
+  ## R CMD check safety
+  value <- NULL
   if(trnsfm==1){
     tf <- lnparz(mnz,sdz)
     mnz <- tf$mu
@@ -38,7 +40,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
   dimp$year <- yrz
   dimp <- data.table::melt(dimp,id='year')
   if(runs!=TRUE){
-    dimp <- dimp[,.(value=mean(value),s=sd(value),
+    dimp <- dimp[,list(value=mean(value),s=sd(value),
                     lo=lo(value),hi=hi(value)),
                  by=year]
   }
@@ -46,9 +48,9 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 }
 
 
-##' Main projection function to be exported
+##' Main Projection Function
 ##'
-##' .. content for \details{projections} ..
+##' Top level main function for use in generating projections of TB notifications, incidence, prevalence and mortality.
 ##' @title projections
 ##' @param year vector of years for which there is data or an estimate is required
 ##' @param Ihat Incidence midpoints (NA if projection/imputation needed)
@@ -71,6 +73,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'   * `IP': SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence).
 ##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
+##' @importFrom stats deltat frequency quantile rnorm sd ts tsp
 ##' @examples
 ##'
 ##' # Some fake data for basic examples:
@@ -154,7 +157,8 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##'           Nhat=tmp$Nhat,sEN=tmp$sEN,
 ##'           Mhat=tmp$Mhat,sEM=tmp$sEM,
 ##'           Phat=tmp$Mhat,sEP=tmp$sEM,
-##'           TXf = tmp$TXf,
+##'           TXf = tmp$TXf,ORt=ORt,
+##'           HRd=HRd,HRi=HRi,
 ##'           modeltype = 'rwI',
 ##'           output='projection')
 ##'
@@ -192,6 +196,9 @@ projections <- function(year,
   ## argument management
   arguments <- list(...)
   list2env(arguments,envir = environment())                   #boost ... to this scope
+  ## R CMD check safety
+  I.sd <- I.mid <- N.mid <- I.lo <- I.hi <- N.lo <- N.hi <- M.mid <- M.sdx3.92 <- NULL
+  M.lo <-  M.hi <- P.mid <- P.sd <- N.sd <- variable <- NULL
   ## completions
   if(!'TXf' %in% names(arguments)) TXf <- rep(0,length(year))
   if(!'HRd' %in% names(arguments)) HRd <- rep(1,length(year))
@@ -227,10 +234,10 @@ projections <- function(year,
     ## replace incidence forecasts with version using N/CDR
     RI[,I.sd:=I.sd/I.mid]        #make proportion
     RI[(maxidxnotna+1):nrow(RI),
-       c('I.mid'):=RN[(maxidxnotna+1):nrow(RI),.(N.mid/CDR)]] #CDR-based incidence
+       c('I.mid'):=RN[(maxidxnotna+1):nrow(RI),list(N.mid/CDR)]] #CDR-based incidence
     RI[,I.sd:=I.sd * I.mid]        #make not a proportion
     RI[(maxidxnotna+1):nrow(RI),
-       c('I.lo','I.hi'):=.(pmax(0,I.mid - 1.96 * I.sd),I.mid + 1.96 * I.sd)]
+       c('I.lo','I.hi'):=list(pmax(0,I.mid - 1.96 * I.sd),I.mid + 1.96 * I.sd)]
     ## fraction HIV+
     if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
       cat('Running HIV component...\n')
@@ -255,21 +262,21 @@ projections <- function(year,
     ANS <- merge(ANS1,ANS2,by='year')
     if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)) ANS <- merge(ANS,RH,by='year')
     ## HR interventions NOTE the notif one will have limited validity
-    ANS[,c('I.mid','I.lo','I.hi'):=.(I.mid*HRi,I.lo*HRi,I.hi*HRi)] #OK
-    ANS[,c('N.mid','N.lo','N.hi'):=.(N.mid*HRi*HRd,N.lo*HRi*HRd,N.hi*HRi*HRd)] #approx
-    ## ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid/HRd,M.lo/HRd,M.hi/HRd)]             #approx
+    ANS[,c('I.mid','I.lo','I.hi'):=list(I.mid*HRi,I.lo*HRi,I.hi*HRi)] #OK
+    ANS[,c('N.mid','N.lo','N.hi'):=list(N.mid*HRi*HRd,N.lo*HRi*HRd,N.hi*HRi*HRd)] #approx
+    ## ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid/HRd,M.lo/HRd,M.hi/HRd)]             #approx
     ## mortality approximation: Untreated' = (Incidence' - Notifications') x CFR
     pb <- maxidxnotna+1; pe <- nrow(ANS)                           #begin/end of projection
     ANS[pb:pe,M.mid:=(I.mid-N.mid)*CFR]                            #mean
     ANS[,M.sdx3.92:=sqrt((I.lo-I.hi)^2+(N.lo-N.hi)^2)*CFR]         #uncertainty measure
-    ANS[pb:pe,c('M.lo','M.hi'):=.(pmax(0,M.mid-M.sdx3.92/2),M.mid+M.sdx3.92/2)]
+    ANS[pb:pe,c('M.lo','M.hi'):=list(pmax(0,M.mid-M.sdx3.92/2),M.mid+M.sdx3.92/2)]
     ANS[,M.sdx3.92:=NULL]
     ## add treated mortality back
     ## project TXf
     if(any(is.na(TXf))){
       TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
     } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
-    ANS[,c('M.mid','M.lo','M.hi'):=.(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] # addon mortality on treatment
+    ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] # addon mortality on treatment
     ## NOTE no extra uncertainty in line above
     ## computing this using duration assumption -
     ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
@@ -282,7 +289,7 @@ projections <- function(year,
     (N.mid*tx.mid)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2)+
     ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
     )]
-    ANS[,c('P.lo','P.hi'):=.(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
+    ANS[,c('P.lo','P.hi'):=list(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
   } else { #============== SSM versions ==============
     nahead <- which.max(!is.na(rev(Ihat)))-1 #assume NAs at back
     lastd <- length(Ihat)-nahead
@@ -322,7 +329,7 @@ projections <- function(year,
     ANS$year <- year[ANS$year]
     ANS <- ANS[!is.na(year)] #removes 1 ahead if 'fit'
     ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
-           .((I.hi-I.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92)]
+           list((I.hi-I.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92)]
     setcolorder(ANS,neworder = c("year",
                                  "I.mid", "I.sd",  "I.lo", "I.hi",
                                  "N.mid", "N.sd",  "N.lo", "N.hi", 
@@ -336,9 +343,9 @@ projections <- function(year,
 
 
 
-##' Main projection function to be exported
+##' SSM-based Projections
 ##'
-##' .. content for \details{Cprojections} ..
+##' This wraps the SSM-based models and projections using BSSM.
 ##' @title Cprojections
 ##' @param year vector of years for which there is data or an estimate is required
 ##' @param Ihat Incidence midpoints (NA if projection/imputation needed)
@@ -379,6 +386,9 @@ Cprojections <- function(year,
                         verbose=FALSE
                         ){
 
+  ## avoiding warnings:
+  override <- logIRR <- logIRRdelta <- variable <- value <- time <- NULL
+  ## set up
   if(nahead==0 & returntype=='futureonly') stop("Can't have nahead=0 and only return future!")
   if(verbose) cat('Using Cprojections...\n')
   arguments <- list(...)
@@ -570,7 +580,7 @@ Cprojections <- function(year,
     tmpof[,value:=exp(value)]
     tmpof[,variable:=gsub('log','',variable)]
     outsf <- rbind(outsf,tmpof)
-    outsf <- outsf[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
+    outsf <- outsf[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
   }
 
   if(verbose) cat('Making predictions...\n')
@@ -593,7 +603,7 @@ Cprojections <- function(year,
   tmpo[,value:=exp(value)]
   tmpo[,variable:=gsub('log','',variable)]
   outs <- rbind(outs,tmpo)
-  outs <- outs[,.(mid=mean(value),lo=lo(value),hi=hi(value)),by=.(variable,time)]
+  outs <- outs[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
   if(returntype=='futureonly'){
     ## No action needed
     cat('future only, no summary...\n')
