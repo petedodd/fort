@@ -133,7 +133,7 @@ arma::vec T_fn_ip(const unsigned int t, const arma::vec& alpha,
   arma::vec alpha_new(7);
   // log I: I_{t+1} = exp(θ_3) ((1-p)I_{t} + p.P_t);   p=ilogit( θ_4 ) 
   // alpha_new(0) = log( (1-pr) * I + pr * P ) + theta(3); // see above
-  alpha_new(0) = (1-pr) * alpha(0) + pr * alpha(1)  + theta(3); // log weighted average
+  alpha_new(0) = (1-pr) * alpha(0) + pr * alpha(1)  + theta(3) + known_tv_params(t,4); // log weighted average
   // log P
   alpha_new(1) = log(I * rho + P * exp(-OM) );
   // log N
@@ -228,7 +228,7 @@ double log_prior_pdf_ip(const arma::vec& theta) {
     R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
-    R::dnorm(theta(4), -1, 0.1, true)+theta(4)*theta(4) // logitN w/ below
+    R::dnorm(theta(4), -1, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
     - arma::accu(theta); //jacobian term
   // Rprintf("the value of log-likelihood : %f \n", log_pdf);
   return log_pdf;

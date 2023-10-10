@@ -158,7 +158,7 @@ arma::mat T_gn(const unsigned int t, const arma::vec& alpha,
   double P = exp(alpha(1));
   double N = exp(alpha(2)); double D = exp(alpha(3));
   double omega = exp(alpha(4));
-    double delta = exp(alpha(5) + known_tv_params(t,5)); // NOTE interventions
+  double delta = exp(alpha(5) + known_tv_params(t,5)); // NOTE interventions
   double psi = 1.0 / (1.0 + exp(-alpha(6))); // expit
   // P = I (1-exp(-O))/O + P exp(-O)
   // dP/domega = dP/ddelta = -P exp(-O) + I (exp(-O)-(1-exp(-O))/O^2)
