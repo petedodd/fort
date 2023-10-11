@@ -447,18 +447,18 @@ Cprojections <- function(year,
 
   ## processing data
   Yhat <- cbind(Ihat,Phat,Nhat,Mhat)
-  Vhat <- cbind(sEI,sEI*5,Nhat*0.1,Mhat)
   NoverI <- Nhat[1]/Ihat[1]
 
   ## transformations NOTE reconsider
   Yhat <- log(Yhat)
-  Vhat <- Yhat
-  Vhat[,c(1,3,4)] <- 0.05
-  Vhat[,2] <- 0.2 #prevalence
+  Vhat <- cbind( rep(1,nrow(Yhat)), #I
+                rep(1/3,nrow(Yhat)),  #P
+                rep(1/10,nrow(Yhat)),  #N
+                rep(1/3,nrow(Yhat)) ) #D
   if('override' %in% names(arguments)){
     if('Vhat' %in% names(override)){
       if(override[['Vhat']]=='literal'){
-        Vhat <- cbind(sEI,sEP,sEN,sEM)
+        Vhat <- cbind(sEI,sEP,sEN,sEM) #NOTE these are in logspace
         if(verbose) cat('...** overriding Vhat **...\n')
       }
     }
@@ -518,7 +518,7 @@ Cprojections <- function(year,
       for(nm in names(override[['nathist']])){ #loop over these
         if(verbose) cat('...** overriding ',nm,' **...\n')
         if(!nm %in% names(known_params)) stop('nathist override not found in known_params: probably not the behaviour you were looking for!')
-        known_params[[nm]] <- override[['nathist']][[nm]]
+        known_params[nm] <- override[['nathist']][[nm]]
       }
     }
   }
@@ -645,7 +645,7 @@ Cprojections <- function(year,
   }
   if(returntype=='projectionfit'){
     cat('returning fit summary...\n')
-    outsb <- rbind(outsf,outs) #combine with past fit
+    outsb <- rbind(outsf[time<max(time)],outs) #combine with past fit
     return(outsb)
   }
   if(returntype=='projection'){
