@@ -46,6 +46,23 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
   }
   dimp
 }
+##' MCMC Summary Computer
+##'
+##' Computes mid (mean) and hi/lo (95% quantiles) by variable and time and also adds in exponentiated variables if their names begin with log.
+##' @title MCMC to summary
+##' @param fit an MCMC fit object from fitting with bssm
+##' @return a data.table with mid,lo,hi by time and variable
+##' @import data.table
+##' @import bssm
+##' @author Pete Dodd
+mcmcsmry <- function(fit){
+  out <- data.table::as.data.table(fit,variable='states')
+  tmpo <- out[grepl('log',variable)] #the logged
+  tmpo[,value:=exp(value)]
+  tmpo[,variable:=gsub('log','',variable)]
+  out <- rbind(out,tmpo)
+  out[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
+}
 
 
 ##' Main Projection Function
@@ -597,12 +614,7 @@ Cprojections <- function(year,
 
   if(verbose) cat('Postprocessing inference...\n')
   cat('calculating fit summary...\n')
-  outsf <- data.table::as.data.table(mcmc_fit,variable='states')
-  tmpof <- outsf[grepl('log',variable)] #the logged
-  tmpof[,value:=exp(value)]
-  tmpof[,variable:=gsub('log','',variable)]
-  outsf <- rbind(outsf,tmpof)
-  outsf <- outsf[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
+  outsf <- mcmcsmry(mcmc_fit) #summarizer to mid/lo/hi
 
   ## predict
   if(nahead>1){
@@ -618,12 +630,7 @@ Cprojections <- function(year,
     mcmc_fit <- pred
 
     if(verbose) cat('Postprocessing projection results...\n')
-    outs <- data.table::as.data.table(mcmc_fit,variable='states')
-    tmpo <- outs[grepl('log',variable)] #the logged
-    tmpo[,value:=exp(value)]
-    tmpo[,variable:=gsub('log','',variable)]
-    outs <- rbind(outs,tmpo)
-    outs <- outs[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
+    outs <- mcmcsmry(mcmc_fit) #summarizer to mid/lo/hi
   }
 
   if(returntype=='futureonly'){
