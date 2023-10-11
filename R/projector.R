@@ -301,25 +301,28 @@ projections <- function(year,
     logIRR <- log(HRi[(lastd+1):length(HRd)])      #IRR on incidence
     logIRRdelta <- log(HRd[(lastd+1):length(HRd)]) #detection
     logORpsi <- log(ORt[(lastd+1):length(HRd)])    #deaths off treatment - not for use
-    ## make guess for P
-    Phat <- Ihat; sEP <- 2*sEI
+    if(all(is.na(Phat))){
+      ## make guess for P
+      Phat <- Ihat; sEP <- 2*sEI
+      if(verbose) cat('No Phat supplied: making a guess from Ihat!\n')
+    }
     didx <- 1:lastd #data range
     if(verbose) cat('...nahead=',nahead,'\n')
     if(verbose) cat('...lastd=',lastd,'\n')
-    ANS <- Cprojections(year[didx],
-                 Ihat[didx],sEI[didx],
-                 Nhat[didx],sEN[didx],
-                 Mhat[didx],sEM[didx],
-                 Phat[didx],sEP[didx],
-                 nahead=nahead,
-                 logIRR=logIRR,
-                 logIRRdelta=logIRRdelta,
-                 logORpsi=logORpsi,
-                 returntype=output,
-                 modeltype=modeltype,
-                 verbose=verbose,
-                 ...
-                 )
+    ANS <- Cprojections(year=year[didx],
+                        Ihat=Ihat[didx],sEI=sEI[didx],
+                        Nhat=Nhat[didx],sEN=sEN[didx],
+                        Mhat=Mhat[didx],sEM=sEM[didx],
+                        Phat=Phat[didx],sEP=sEP[didx]
+                        nahead=nahead,
+                        logIRR=logIRR,
+                        logIRRdelta=logIRRdelta,
+                        logORpsi=logORpsi,
+                        returntype=output,
+                        modeltype=modeltype,
+                        verbose=verbose,
+                        ...
+                        )
     if(verbose) cat('...Cprojections returned OK...\n')
   }
   if(modeltype!='failsafe' & !returninternalfit){
@@ -579,8 +582,7 @@ Cprojections <- function(year,
   if(modeltype=='rwI'){
     cat('Using model type: ', modeltype,'\n')
     model <- modelrwi
-  }
-  if(modeltype=='IP'){
+  } else if(modeltype=='IP'){
     cat('Using model type: ', modeltype,'\n')
     model <- modelip
   }
@@ -594,7 +596,7 @@ Cprojections <- function(year,
   mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
 
   if(verbose) cat('Postprocessing inference...\n')
-  if(returntype=='fit'){
+  ## if(returntype=='fit'){
     cat('calculating fit summary...\n')
     outsf <- as.data.table(mcmc_fit,variable='states')
     tmpof <- outsf[grepl('log',variable)] #the logged
@@ -602,11 +604,12 @@ Cprojections <- function(year,
     tmpof[,variable:=gsub('log','',variable)]
     outsf <- rbind(outsf,tmpof)
     outsf <- outsf[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
-  }
-  if(verbose) cat('Making predictions...\n')
+  ## }
 
   ## predict
   if(nahead>1){
+    if(verbose) cat('Making predictions...\n')
+    if(verbose) cat('nahead: ',nahead,' > 1 ...\n')
     future_model <- model
     future_model$y <- ts(matrix(NA, ncol=4,nrow=nahead),
                          start = tsp(model$y)[2] + deltat(model$y),
@@ -615,19 +618,30 @@ Cprojections <- function(year,
     pred <- predict(mcmc_fit, model = future_model, type = "state", 
                     nsim = 1000)
     mcmc_fit <- pred
+
+    if(verbose) cat('Postprocessing projection results...\n')
+    outs <- data.table::as.data.table(mcmc_fit,variable='states')
+    tmpo <- outs[grepl('log',variable)] #the logged
+    tmpo[,value:=exp(value)]
+    tmpo[,variable:=gsub('log','',variable)]
+    outs <- rbind(outs,tmpo)
+    outs <- outs[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
   }
 
-  if(verbose) cat('Postprocessing results...\n')
-  outs <- data.table::as.data.table(mcmc_fit,variable='states')
-  tmpo <- outs[grepl('log',variable)] #the logged
-  tmpo[,value:=exp(value)]
-  tmpo[,variable:=gsub('log','',variable)]
-  outs <- rbind(outs,tmpo)
-  outs <- outs[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
   if(returntype=='futureonly'){
     ## No action needed
     cat('future only, no summary...\n')
     return(outs) #BUG if used in wrapper?
+  }
+  if(returntype=='fit'){
+    cat('returning fit summary...\n')
+    return(outsf)
+    ## outs <- rbind(outsf,outs) #combine with past fit
+  }
+  if(returntype=='projectionfit'){
+    cat('returning fit summary...\n')
+    outs <- rbind(outsf,outs) #combine with past fit
+    return(outsf)
   }
   if(returntype=='projection'){
     cat('projection fit summary...\n')
@@ -656,10 +670,5 @@ Cprojections <- function(year,
     ## ouput
     outs <- rbind(inputs.a,outs)
     return(outs)
-  }
-  if(returntype=='fit'){
-    cat('returning fit summary...\n')
-    return(outsf)
-    ## outs <- rbind(outsf,outs) #combine with past fit
   }
 }

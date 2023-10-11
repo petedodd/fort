@@ -228,7 +228,7 @@ double log_prior_pdf_ip(const arma::vec& theta) {
     R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
-    R::dnorm(theta(4), -1, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    R::dnorm(theta(4), -3, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
     - arma::accu(theta); //jacobian term
   // Rprintf("the value of log-likelihood : %f \n", log_pdf);
   return log_pdf;
