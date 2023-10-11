@@ -313,7 +313,7 @@ projections <- function(year,
                         Ihat=Ihat[didx],sEI=sEI[didx],
                         Nhat=Nhat[didx],sEN=sEN[didx],
                         Mhat=Mhat[didx],sEM=sEM[didx],
-                        Phat=Phat[didx],sEP=sEP[didx]
+                        Phat=Phat[didx],sEP=sEP[didx],
                         nahead=nahead,
                         logIRR=logIRR,
                         logIRRdelta=logIRRdelta,
@@ -568,14 +568,14 @@ Cprojections <- function(year,
                             state_names = tt3SNMZ)
   ## IP
   modelip <- bssm::ssm_nlg(y = Yhat,
-                   a1=pntrsip$a1, P1 = pntrsip$P1, #TODO why not _fn_ip?
-                   Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
-                   T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
-                   Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
-                   theta = initial_theta_ip, log_prior_pdf = pntrsip$log_prior_pdf_ip,
-                   known_params = known_params, known_tv_params = known_tv_params,
-                   n_states = 7, n_etas = 4,
-                   state_names = tt3SNMZ)
+                           a1=pntrsip$a1, P1 = pntrsip$P1, #TODO why not _fn_ip?
+                           Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
+                           T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
+                           Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
+                           theta = initial_theta_ip, log_prior_pdf = pntrsip$log_prior_pdf_ip,
+                           known_params = known_params, known_tv_params = known_tv_params,
+                           n_states = 7, n_etas = 4,
+                           state_names = tt3SNMZ)
 
   ## choose model to use
 
@@ -596,15 +596,13 @@ Cprojections <- function(year,
   mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
 
   if(verbose) cat('Postprocessing inference...\n')
-  ## if(returntype=='fit'){
-    cat('calculating fit summary...\n')
-    outsf <- as.data.table(mcmc_fit,variable='states')
-    tmpof <- outsf[grepl('log',variable)] #the logged
-    tmpof[,value:=exp(value)]
-    tmpof[,variable:=gsub('log','',variable)]
-    outsf <- rbind(outsf,tmpof)
-    outsf <- outsf[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
-  ## }
+  cat('calculating fit summary...\n')
+  outsf <- data.table::as.data.table(mcmc_fit,variable='states')
+  tmpof <- outsf[grepl('log',variable)] #the logged
+  tmpof[,value:=exp(value)]
+  tmpof[,variable:=gsub('log','',variable)]
+  outsf <- rbind(outsf,tmpof)
+  outsf <- outsf[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
 
   ## predict
   if(nahead>1){
@@ -631,7 +629,7 @@ Cprojections <- function(year,
   if(returntype=='futureonly'){
     ## No action needed
     cat('future only, no summary...\n')
-    return(outs) #BUG if used in wrapper?
+    return(outs)
   }
   if(returntype=='fit'){
     cat('returning fit summary...\n')
@@ -640,8 +638,8 @@ Cprojections <- function(year,
   }
   if(returntype=='projectionfit'){
     cat('returning fit summary...\n')
-    outs <- rbind(outsf,outs) #combine with past fit
-    return(outsf)
+    outsb <- rbind(outsf,outs) #combine with past fit
+    return(outsb)
   }
   if(returntype=='projection'){
     cat('projection fit summary...\n')
