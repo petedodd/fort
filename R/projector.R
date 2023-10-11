@@ -593,7 +593,10 @@ Cprojections <- function(year,
                             known_params = known_params, known_tv_params = known_tv_params,
                             n_states = 7, n_etas = 4,
                             state_names = tt3SNMZ)
+
+
   ## IP
+  logIPprior <- pntrsip$log_prior_pdf_ip0 #safety for rwI
   if(modeltype=='IP1'){
     logIPprior <- pntrsip$log_prior_pdf_ip1
   } else if(modeltype=='IP2'){
