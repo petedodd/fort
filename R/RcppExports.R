@@ -33,12 +33,44 @@ T_gn_ip <- function(t, alpha, theta, known_params, known_tv_params) {
     .Call(`_fort_T_gn_ip`, t, alpha, theta, known_params, known_tv_params)
 }
 
-log_prior_pdf_ip <- function(theta) {
-    .Call(`_fort_log_prior_pdf_ip`, theta)
+log_prior_pdf_ip4 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ip4`, theta)
 }
 
-create_xptrs_ip <- function() {
-    .Call(`_fort_create_xptrs_ip`)
+log_prior_pdf_ip3 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ip3`, theta)
+}
+
+log_prior_pdf_ip2 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ip2`, theta)
+}
+
+log_prior_pdf_ip1 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ip1`, theta)
+}
+
+log_prior_pdf_ip0 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ip0`, theta)
+}
+
+log_prior_pdf_ipn1 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ipn1`, theta)
+}
+
+log_prior_pdf_ipn2 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ipn2`, theta)
+}
+
+log_prior_pdf_ipn3 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ipn3`, theta)
+}
+
+log_prior_pdf_ipn4 <- function(theta) {
+    .Call(`_fort_log_prior_pdf_ipn4`, theta)
+}
+
+create_xptrs_ip_all <- function() {
+    .Call(`_fort_create_xptrs_ip_all`)
 }
 
 a1_fn <- function(theta, known_params) {

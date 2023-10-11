@@ -193,17 +193,17 @@ namespace fort {
         return Rcpp::as<arma::mat >(rcpp_result_gen);
     }
 
-    inline double log_prior_pdf_ip(const arma::vec& theta) {
-        typedef SEXP(*Ptr_log_prior_pdf_ip)(SEXP);
-        static Ptr_log_prior_pdf_ip p_log_prior_pdf_ip = NULL;
-        if (p_log_prior_pdf_ip == NULL) {
-            validateSignature("double(*log_prior_pdf_ip)(const arma::vec&)");
-            p_log_prior_pdf_ip = (Ptr_log_prior_pdf_ip)R_GetCCallable("fort", "_fort_log_prior_pdf_ip");
+    inline double log_prior_pdf_ip4(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ip4)(SEXP);
+        static Ptr_log_prior_pdf_ip4 p_log_prior_pdf_ip4 = NULL;
+        if (p_log_prior_pdf_ip4 == NULL) {
+            validateSignature("double(*log_prior_pdf_ip4)(const arma::vec&)");
+            p_log_prior_pdf_ip4 = (Ptr_log_prior_pdf_ip4)R_GetCCallable("fort", "_fort_log_prior_pdf_ip4");
         }
         RObject rcpp_result_gen;
         {
             RNGScope RCPP_rngScope_gen;
-            rcpp_result_gen = p_log_prior_pdf_ip(Shield<SEXP>(Rcpp::wrap(theta)));
+            rcpp_result_gen = p_log_prior_pdf_ip4(Shield<SEXP>(Rcpp::wrap(theta)));
         }
         if (rcpp_result_gen.inherits("interrupted-error"))
             throw Rcpp::internal::InterruptedException();
@@ -214,17 +214,185 @@ namespace fort {
         return Rcpp::as<double >(rcpp_result_gen);
     }
 
-    inline Rcpp::List create_xptrs_ip() {
-        typedef SEXP(*Ptr_create_xptrs_ip)();
-        static Ptr_create_xptrs_ip p_create_xptrs_ip = NULL;
-        if (p_create_xptrs_ip == NULL) {
-            validateSignature("Rcpp::List(*create_xptrs_ip)()");
-            p_create_xptrs_ip = (Ptr_create_xptrs_ip)R_GetCCallable("fort", "_fort_create_xptrs_ip");
+    inline double log_prior_pdf_ip3(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ip3)(SEXP);
+        static Ptr_log_prior_pdf_ip3 p_log_prior_pdf_ip3 = NULL;
+        if (p_log_prior_pdf_ip3 == NULL) {
+            validateSignature("double(*log_prior_pdf_ip3)(const arma::vec&)");
+            p_log_prior_pdf_ip3 = (Ptr_log_prior_pdf_ip3)R_GetCCallable("fort", "_fort_log_prior_pdf_ip3");
         }
         RObject rcpp_result_gen;
         {
             RNGScope RCPP_rngScope_gen;
-            rcpp_result_gen = p_create_xptrs_ip();
+            rcpp_result_gen = p_log_prior_pdf_ip3(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline double log_prior_pdf_ip2(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ip2)(SEXP);
+        static Ptr_log_prior_pdf_ip2 p_log_prior_pdf_ip2 = NULL;
+        if (p_log_prior_pdf_ip2 == NULL) {
+            validateSignature("double(*log_prior_pdf_ip2)(const arma::vec&)");
+            p_log_prior_pdf_ip2 = (Ptr_log_prior_pdf_ip2)R_GetCCallable("fort", "_fort_log_prior_pdf_ip2");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_log_prior_pdf_ip2(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline double log_prior_pdf_ip1(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ip1)(SEXP);
+        static Ptr_log_prior_pdf_ip1 p_log_prior_pdf_ip1 = NULL;
+        if (p_log_prior_pdf_ip1 == NULL) {
+            validateSignature("double(*log_prior_pdf_ip1)(const arma::vec&)");
+            p_log_prior_pdf_ip1 = (Ptr_log_prior_pdf_ip1)R_GetCCallable("fort", "_fort_log_prior_pdf_ip1");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_log_prior_pdf_ip1(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline double log_prior_pdf_ip0(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ip0)(SEXP);
+        static Ptr_log_prior_pdf_ip0 p_log_prior_pdf_ip0 = NULL;
+        if (p_log_prior_pdf_ip0 == NULL) {
+            validateSignature("double(*log_prior_pdf_ip0)(const arma::vec&)");
+            p_log_prior_pdf_ip0 = (Ptr_log_prior_pdf_ip0)R_GetCCallable("fort", "_fort_log_prior_pdf_ip0");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_log_prior_pdf_ip0(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline double log_prior_pdf_ipn1(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ipn1)(SEXP);
+        static Ptr_log_prior_pdf_ipn1 p_log_prior_pdf_ipn1 = NULL;
+        if (p_log_prior_pdf_ipn1 == NULL) {
+            validateSignature("double(*log_prior_pdf_ipn1)(const arma::vec&)");
+            p_log_prior_pdf_ipn1 = (Ptr_log_prior_pdf_ipn1)R_GetCCallable("fort", "_fort_log_prior_pdf_ipn1");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_log_prior_pdf_ipn1(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline double log_prior_pdf_ipn2(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ipn2)(SEXP);
+        static Ptr_log_prior_pdf_ipn2 p_log_prior_pdf_ipn2 = NULL;
+        if (p_log_prior_pdf_ipn2 == NULL) {
+            validateSignature("double(*log_prior_pdf_ipn2)(const arma::vec&)");
+            p_log_prior_pdf_ipn2 = (Ptr_log_prior_pdf_ipn2)R_GetCCallable("fort", "_fort_log_prior_pdf_ipn2");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_log_prior_pdf_ipn2(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline double log_prior_pdf_ipn3(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ipn3)(SEXP);
+        static Ptr_log_prior_pdf_ipn3 p_log_prior_pdf_ipn3 = NULL;
+        if (p_log_prior_pdf_ipn3 == NULL) {
+            validateSignature("double(*log_prior_pdf_ipn3)(const arma::vec&)");
+            p_log_prior_pdf_ipn3 = (Ptr_log_prior_pdf_ipn3)R_GetCCallable("fort", "_fort_log_prior_pdf_ipn3");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_log_prior_pdf_ipn3(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline double log_prior_pdf_ipn4(const arma::vec& theta) {
+        typedef SEXP(*Ptr_log_prior_pdf_ipn4)(SEXP);
+        static Ptr_log_prior_pdf_ipn4 p_log_prior_pdf_ipn4 = NULL;
+        if (p_log_prior_pdf_ipn4 == NULL) {
+            validateSignature("double(*log_prior_pdf_ipn4)(const arma::vec&)");
+            p_log_prior_pdf_ipn4 = (Ptr_log_prior_pdf_ipn4)R_GetCCallable("fort", "_fort_log_prior_pdf_ipn4");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_log_prior_pdf_ipn4(Shield<SEXP>(Rcpp::wrap(theta)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
+    inline Rcpp::List create_xptrs_ip_all() {
+        typedef SEXP(*Ptr_create_xptrs_ip_all)();
+        static Ptr_create_xptrs_ip_all p_create_xptrs_ip_all = NULL;
+        if (p_create_xptrs_ip_all == NULL) {
+            validateSignature("Rcpp::List(*create_xptrs_ip_all)()");
+            p_create_xptrs_ip_all = (Ptr_create_xptrs_ip_all)R_GetCCallable("fort", "_fort_create_xptrs_ip_all");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_create_xptrs_ip_all();
         }
         if (rcpp_result_gen.inherits("interrupted-error"))
             throw Rcpp::internal::InterruptedException();

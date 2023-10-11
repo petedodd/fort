@@ -208,20 +208,117 @@ arma::mat T_gn_ip(const unsigned int t, const arma::vec& alpha,
 
 
 
+
+// ================ hyperprior variants ==================
+
 // log-prior pdf for theta
 // [[Rcpp::export]]
-double log_prior_pdf_ip(const arma::vec& theta) {
+double log_prior_pdf_ip4(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), +4, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
+  return log_pdf;
+}
 
-  // weakly informative half-N(0, 4) priors. 
-  // Note that the sampling is on log-scale, 
-  // so we need to add jacobians of the corresponding transformations
-  // we could also sample on natural scale with check such as
-  // if(arma::any(theta < 0))
-  //  return -std::numeric_limits<double>::infinity();
-  // but this would be less efficient.
 
-  // You can use R::dnorm and similar functions, see, e.g.
-  // https://teuder.github.io/rcpp4everyone_en/220_dpqr_functions.html
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ip3(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), +3, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
+  return log_pdf;
+}
+
+
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ip2(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), +2, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
+  return log_pdf;
+}
+
+
+
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ip1(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), +1, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
+  return log_pdf;
+}
+
+
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ip0(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), 0.0, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
+  return log_pdf;
+}
+
+
+
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ipn1(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), -1, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
+  return log_pdf;
+}
+
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ipn2(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), -2, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
+  return log_pdf;
+}
+
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ipn3(const arma::vec& theta) {
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -230,12 +327,26 @@ double log_prior_pdf_ip(const arma::vec& theta) {
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), -3, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
     - arma::accu(theta); //jacobian term
-  // Rprintf("the value of log-likelihood : %f \n", log_pdf);
+  return log_pdf;
+}
+
+
+// log-prior pdf for theta
+// [[Rcpp::export]]
+double log_prior_pdf_ipn4(const arma::vec& theta) {
+  double noisehp = 1.0;
+  double log_pdf =
+    R::dnorm(theta(0), 0, noisehp, true) + // I noise
+    R::dnorm(theta(1), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
+    R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
+    R::dnorm(theta(4), -4, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    - arma::accu(theta); //jacobian term
   return log_pdf;
 }
 
 // [[Rcpp::export]]
-Rcpp::List create_xptrs_ip() {
+Rcpp::List create_xptrs_ip_all() {
 
   // typedef for a pointer of nonlinear function returning vec (T, Z)
   typedef arma::vec (*nvec_fnPtr)(const unsigned int t, 
@@ -264,7 +375,24 @@ Rcpp::List create_xptrs_ip() {
                             Rcpp::Named("R_fn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&R_fn_ip)),
                             Rcpp::Named("Z_gn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&Z_gn_ip)),
                             Rcpp::Named("T_gn_ip") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&T_gn_ip)),
-                            Rcpp::Named("log_prior_pdf_ip") = 
-                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ip)));
+                            Rcpp::Named("log_prior_pdf_ip4") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ip4)),
+                            Rcpp::Named("log_prior_pdf_ip3") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ip3)),
+                            Rcpp::Named("log_prior_pdf_ip2") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ip2)),
+                            Rcpp::Named("log_prior_pdf_ip1") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ip1)),
+                            Rcpp::Named("log_prior_pdf_ip0") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ip0)),
+                            Rcpp::Named("log_prior_pdf_ipn1") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ipn1)),
+                            Rcpp::Named("log_prior_pdf_ipn2") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ipn2)),
+                            Rcpp::Named("log_prior_pdf_ipn3") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ipn3)),
+                            Rcpp::Named("log_prior_pdf_ipn4") = 
+                            Rcpp::XPtr<prior_fnPtr>(new prior_fnPtr(&log_prior_pdf_ipn4)));
 }
+
 

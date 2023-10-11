@@ -439,7 +439,7 @@ Cprojections <- function(year,
   }
 
   ## model choice safety
-  if(!modeltype %in% c('rwI','IP')){
+  if(! (modeltype=='rwI' | substr(modeltype,1,2)=='IP') ){
     wrn <- paste0('modeltype = ',modeltype,' is unknown! Using rwI\n')
     warning(wrn)
     modeltype <- 'rwI'
@@ -542,7 +542,7 @@ Cprojections <- function(year,
   ## --- create models
   ## model pointers
   pntrsrw <- create_xptrs() #create pointers for rwI model
-  pntrsip <- create_xptrs_ip() #create pointers for IP model
+  pntrsip <- create_xptrs_ip_all() #create pointers for IP model
 
   if(verbose){
     cat('Testing pointers:\n')
@@ -560,8 +560,9 @@ Cprojections <- function(year,
     (tdZ <- Z_gn(1,state,initial_theta,known_params,known_tv_params))
     (tT <- T_fn(1,state,initial_theta,known_params,known_tv_params))
     (tdT <- T_gn(1,state,initial_theta,known_params,known_tv_params))
-    log_prior_pdf(initial_theta)
+    (log_prior_pdf(initial_theta))
     cat('IP...\n')
+    print(names(pntrsip))
     (ta1 <- a1_fn_ip(initial_theta_ip,known_params))
     (tP1 <- P1_fn_ip(initial_theta_ip,known_params))
     (tH <- H_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
@@ -570,7 +571,16 @@ Cprojections <- function(year,
     (tdZ <- Z_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
     (tT <- T_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
     (tdT <- T_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    log_prior_pdf_ip(initial_theta_ip)
+    cat('--- IP prior variants ---\n')
+    print(log_prior_pdf_ip4(initial_theta_ip))
+    print(log_prior_pdf_ip3(initial_theta_ip))
+    print(log_prior_pdf_ip2(initial_theta_ip))
+    print(log_prior_pdf_ip1(initial_theta_ip))
+    print(log_prior_pdf_ip0(initial_theta_ip))
+    print(log_prior_pdf_ipn4(initial_theta_ip))
+    print(log_prior_pdf_ipn3(initial_theta_ip))
+    print(log_prior_pdf_ipn2(initial_theta_ip))
+    print(log_prior_pdf_ipn1(initial_theta_ip))
     cat('...done.\n')
   }
 
@@ -584,12 +594,32 @@ Cprojections <- function(year,
                             n_states = 7, n_etas = 4,
                             state_names = tt3SNMZ)
   ## IP
+  if(modeltype=='IP1'){
+    logIPprior <- pntrsip$log_prior_pdf_ip1
+  } else if(modeltype=='IP2'){
+    logIPprior <- pntrsip$log_prior_pdf_ip2
+  } else if(modeltype=='IP3'){
+    logIPprior <- pntrsip$log_prior_pdf_ip3
+  } else if(modeltype=='IP4'){
+    logIPprior <- pntrsip$log_prior_pdf_ip4
+  } else if(modeltype=='IPn1'){
+    logIPprior <- pntrsip$log_prior_pdf_ipn1
+  } else if(modeltype=='IPn2'){
+    logIPprior <- pntrsip$log_prior_pdf_ipn2
+  } else if(modeltype=='IPn3'){
+    logIPprior <- pntrsip$log_prior_pdf_ipn2
+  } else if(modeltype=='IPn4'){
+    logIPprior <- pntrsip$log_prior_pdf_ipn4
+  } else if(modeltype=='IP0' | modeltype=='IP'){
+    logIPprior <- pntrsip$log_prior_pdf_ip0
+  }
+
   modelip <- bssm::ssm_nlg(y = Yhat,
-                           a1=pntrsip$a1, P1 = pntrsip$P1, #TODO why not _fn_ip?
+                           a1=pntrsip$a1, P1 = pntrsip$P1,
                            Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
                            T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
                            Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
-                           theta = initial_theta_ip, log_prior_pdf = pntrsip$log_prior_pdf_ip,
+                           theta = initial_theta_ip, log_prior_pdf = logIPprior,
                            known_params = known_params, known_tv_params = known_tv_params,
                            n_states = 7, n_etas = 4,
                            state_names = tt3SNMZ)
@@ -599,7 +629,7 @@ Cprojections <- function(year,
   if(modeltype=='rwI'){
     cat('Using model type: ', modeltype,'\n')
     model <- modelrwi
-  } else if(modeltype=='IP'){
+  } else if(substr(modeltype,1,2)=='IP'){
     cat('Using model type: ', modeltype,'\n')
     model <- modelip
   }

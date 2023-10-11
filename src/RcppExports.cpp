@@ -312,21 +312,21 @@ RcppExport SEXP _fort_T_gn_ip(SEXP tSEXP, SEXP alphaSEXP, SEXP thetaSEXP, SEXP k
     UNPROTECT(1);
     return rcpp_result_gen;
 }
-// log_prior_pdf_ip
-double log_prior_pdf_ip(const arma::vec& theta);
-static SEXP _fort_log_prior_pdf_ip_try(SEXP thetaSEXP) {
+// log_prior_pdf_ip4
+double log_prior_pdf_ip4(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ip4_try(SEXP thetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
-    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ip(theta));
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ip4(theta));
     return rcpp_result_gen;
 END_RCPP_RETURN_ERROR
 }
-RcppExport SEXP _fort_log_prior_pdf_ip(SEXP thetaSEXP) {
+RcppExport SEXP _fort_log_prior_pdf_ip4(SEXP thetaSEXP) {
     SEXP rcpp_result_gen;
     {
         Rcpp::RNGScope rcpp_rngScope_gen;
-        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ip_try(thetaSEXP));
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ip4_try(thetaSEXP));
     }
     Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
     if (rcpp_isInterrupt_gen) {
@@ -346,20 +346,292 @@ RcppExport SEXP _fort_log_prior_pdf_ip(SEXP thetaSEXP) {
     UNPROTECT(1);
     return rcpp_result_gen;
 }
-// create_xptrs_ip
-Rcpp::List create_xptrs_ip();
-static SEXP _fort_create_xptrs_ip_try() {
+// log_prior_pdf_ip3
+double log_prior_pdf_ip3(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ip3_try(SEXP thetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    rcpp_result_gen = Rcpp::wrap(create_xptrs_ip());
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ip3(theta));
     return rcpp_result_gen;
 END_RCPP_RETURN_ERROR
 }
-RcppExport SEXP _fort_create_xptrs_ip() {
+RcppExport SEXP _fort_log_prior_pdf_ip3(SEXP thetaSEXP) {
     SEXP rcpp_result_gen;
     {
         Rcpp::RNGScope rcpp_rngScope_gen;
-        rcpp_result_gen = PROTECT(_fort_create_xptrs_ip_try());
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ip3_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// log_prior_pdf_ip2
+double log_prior_pdf_ip2(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ip2_try(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ip2(theta));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_log_prior_pdf_ip2(SEXP thetaSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ip2_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// log_prior_pdf_ip1
+double log_prior_pdf_ip1(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ip1_try(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ip1(theta));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_log_prior_pdf_ip1(SEXP thetaSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ip1_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// log_prior_pdf_ip0
+double log_prior_pdf_ip0(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ip0_try(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ip0(theta));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_log_prior_pdf_ip0(SEXP thetaSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ip0_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// log_prior_pdf_ipn1
+double log_prior_pdf_ipn1(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ipn1_try(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ipn1(theta));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_log_prior_pdf_ipn1(SEXP thetaSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ipn1_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// log_prior_pdf_ipn2
+double log_prior_pdf_ipn2(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ipn2_try(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ipn2(theta));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_log_prior_pdf_ipn2(SEXP thetaSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ipn2_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// log_prior_pdf_ipn3
+double log_prior_pdf_ipn3(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ipn3_try(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ipn3(theta));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_log_prior_pdf_ipn3(SEXP thetaSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ipn3_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// log_prior_pdf_ipn4
+double log_prior_pdf_ipn4(const arma::vec& theta);
+static SEXP _fort_log_prior_pdf_ipn4_try(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_prior_pdf_ipn4(theta));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_log_prior_pdf_ipn4(SEXP thetaSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_log_prior_pdf_ipn4_try(thetaSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// create_xptrs_ip_all
+Rcpp::List create_xptrs_ip_all();
+static SEXP _fort_create_xptrs_ip_all_try() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    rcpp_result_gen = Rcpp::wrap(create_xptrs_ip_all());
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_create_xptrs_ip_all() {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_create_xptrs_ip_all_try());
     }
     Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
     if (rcpp_isInterrupt_gen) {
@@ -757,8 +1029,16 @@ static int _fort_RcppExport_validate(const char* sig) {
         signatures.insert("arma::mat(*Z_gn_ip)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
         signatures.insert("arma::vec(*T_fn_ip)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
         signatures.insert("arma::mat(*T_gn_ip)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
-        signatures.insert("double(*log_prior_pdf_ip)(const arma::vec&)");
-        signatures.insert("Rcpp::List(*create_xptrs_ip)()");
+        signatures.insert("double(*log_prior_pdf_ip4)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ip3)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ip2)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ip1)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ip0)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ipn1)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ipn2)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ipn3)(const arma::vec&)");
+        signatures.insert("double(*log_prior_pdf_ipn4)(const arma::vec&)");
+        signatures.insert("Rcpp::List(*create_xptrs_ip_all)()");
         signatures.insert("arma::vec(*a1_fn)(const arma::vec&,const arma::vec&)");
         signatures.insert("arma::mat(*P1_fn)(const arma::vec&,const arma::vec&)");
         signatures.insert("arma::mat(*H_fn)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
@@ -783,8 +1063,16 @@ RcppExport SEXP _fort_RcppExport_registerCCallable() {
     R_RegisterCCallable("fort", "_fort_Z_gn_ip", (DL_FUNC)_fort_Z_gn_ip_try);
     R_RegisterCCallable("fort", "_fort_T_fn_ip", (DL_FUNC)_fort_T_fn_ip_try);
     R_RegisterCCallable("fort", "_fort_T_gn_ip", (DL_FUNC)_fort_T_gn_ip_try);
-    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ip", (DL_FUNC)_fort_log_prior_pdf_ip_try);
-    R_RegisterCCallable("fort", "_fort_create_xptrs_ip", (DL_FUNC)_fort_create_xptrs_ip_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ip4", (DL_FUNC)_fort_log_prior_pdf_ip4_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ip3", (DL_FUNC)_fort_log_prior_pdf_ip3_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ip2", (DL_FUNC)_fort_log_prior_pdf_ip2_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ip1", (DL_FUNC)_fort_log_prior_pdf_ip1_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ip0", (DL_FUNC)_fort_log_prior_pdf_ip0_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn1", (DL_FUNC)_fort_log_prior_pdf_ipn1_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn2", (DL_FUNC)_fort_log_prior_pdf_ipn2_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn3", (DL_FUNC)_fort_log_prior_pdf_ipn3_try);
+    R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn4", (DL_FUNC)_fort_log_prior_pdf_ipn4_try);
+    R_RegisterCCallable("fort", "_fort_create_xptrs_ip_all", (DL_FUNC)_fort_create_xptrs_ip_all_try);
     R_RegisterCCallable("fort", "_fort_a1_fn", (DL_FUNC)_fort_a1_fn_try);
     R_RegisterCCallable("fort", "_fort_P1_fn", (DL_FUNC)_fort_P1_fn_try);
     R_RegisterCCallable("fort", "_fort_H_fn", (DL_FUNC)_fort_H_fn_try);
@@ -808,8 +1096,16 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fort_Z_gn_ip", (DL_FUNC) &_fort_Z_gn_ip, 5},
     {"_fort_T_fn_ip", (DL_FUNC) &_fort_T_fn_ip, 5},
     {"_fort_T_gn_ip", (DL_FUNC) &_fort_T_gn_ip, 5},
-    {"_fort_log_prior_pdf_ip", (DL_FUNC) &_fort_log_prior_pdf_ip, 1},
-    {"_fort_create_xptrs_ip", (DL_FUNC) &_fort_create_xptrs_ip, 0},
+    {"_fort_log_prior_pdf_ip4", (DL_FUNC) &_fort_log_prior_pdf_ip4, 1},
+    {"_fort_log_prior_pdf_ip3", (DL_FUNC) &_fort_log_prior_pdf_ip3, 1},
+    {"_fort_log_prior_pdf_ip2", (DL_FUNC) &_fort_log_prior_pdf_ip2, 1},
+    {"_fort_log_prior_pdf_ip1", (DL_FUNC) &_fort_log_prior_pdf_ip1, 1},
+    {"_fort_log_prior_pdf_ip0", (DL_FUNC) &_fort_log_prior_pdf_ip0, 1},
+    {"_fort_log_prior_pdf_ipn1", (DL_FUNC) &_fort_log_prior_pdf_ipn1, 1},
+    {"_fort_log_prior_pdf_ipn2", (DL_FUNC) &_fort_log_prior_pdf_ipn2, 1},
+    {"_fort_log_prior_pdf_ipn3", (DL_FUNC) &_fort_log_prior_pdf_ipn3, 1},
+    {"_fort_log_prior_pdf_ipn4", (DL_FUNC) &_fort_log_prior_pdf_ipn4, 1},
+    {"_fort_create_xptrs_ip_all", (DL_FUNC) &_fort_create_xptrs_ip_all, 0},
     {"_fort_a1_fn", (DL_FUNC) &_fort_a1_fn, 2},
     {"_fort_P1_fn", (DL_FUNC) &_fort_P1_fn, 2},
     {"_fort_H_fn", (DL_FUNC) &_fort_H_fn, 5},
