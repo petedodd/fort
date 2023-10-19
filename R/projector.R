@@ -56,6 +56,7 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' @import bssm
 ##' @author Pete Dodd
 mcmcsmry <- function(fit){
+  variable <- value <- time <- NULL #avoiding notes
   out <- data.table::as.data.table(fit,variable='states')
   tmpo <- out[grepl('log',variable)] #the logged
   tmpo[,value:=exp(value)]
@@ -221,10 +222,10 @@ projections <- function(year,
   I.sd <- I.mid <- N.mid <- I.lo <- I.hi <- N.lo <- N.hi <- M.mid <- M.sdx3.92 <- NULL
   M.lo <-  M.hi <- P.mid <- P.sd <- N.sd <- variable <- NULL
   ## completions
-  if(!'TXf' %in% names(arguments)) TXf <- rep(0,length(year))
-  if(!'HRd' %in% names(arguments)) HRd <- rep(1,length(year))
-  if(!'HRi' %in% names(arguments)) HRi <- rep(1,length(year))
-  if(!'ORt' %in% names(arguments)) ORt <- rep(1,length(year))
+  if(missing(TXf)) TXf <- rep(0,length(year))
+  if(missing(HRd)) HRd <- rep(1,length(year))
+  if(missing(HRi)) HRi <- rep(1,length(year))
+  if(missing(ORt)) ORt <- rep(1,length(year))
   if(modeltype=='failsafe'){ #============== FAILSAFE MODEL ==============
     ## incidence
     suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
@@ -323,15 +324,23 @@ projections <- function(year,
       Phat <- Ihat; sEP <- 2*sEI
       if(verbose) cat('No Phat supplied: making a guess from Ihat!\n')
     }
+    ## ## project TXf
+    ## if(any(is.na(TXf))){
+    ##   TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
+    ## } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
+
     didx <- 1:lastd #data range
     if(verbose) cat('...nahead=',nahead,'\n')
     if(verbose) cat('...lastd=',lastd,'\n')
+    if(verbose) cat('...passing off to Cprojections:\n')
+
     ANS <- Cprojections(year=year[didx],
                         Ihat=Ihat[didx],sEI=sEI[didx],
                         Nhat=Nhat[didx],sEN=sEN[didx],
                         Mhat=Mhat[didx],sEM=sEM[didx],
                         Phat=Phat[didx],sEP=sEP[didx],
                         nahead=nahead,
+                        TXf=TXf,
                         logIRR=logIRR,
                         logIRRdelta=logIRRdelta,
                         logORpsi=logORpsi,
@@ -390,8 +399,12 @@ projections <- function(year,
 ##' @param Mhat Deaths midpoints (NA if projection/imputation needed)
 ##' @param sEM Deaths uncertainty as SD (NA if projection/imputation needed)
 ##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
-##' @param ... Additional parameters to help tune away from defaults
 ##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
+##' @param TXf Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)
+##' @param logIRRdelta Log-hazard ratios to apply to detection hazard (assumed 1 if not given)
+##' @param logIRR Log-hazard ratios to apply to incidence (assumed 1 if not given)
+##' @param logORpsi Log-hazard ratios to apply to treatment fatality (assumed 1 if not given)
+##' @param ... Additional parameters to help tune away from defaults
 ##' @param returntype Determines what is returned if projecting
 ##' @param nahead how many years to project
 ##' * `futureonly': (default) only returns projection
@@ -415,6 +428,7 @@ Cprojections <- function(year,
                         Nhat,sEN,
                         Mhat,sEM,
                         Phat,sEP,
+                        TXf,logIRR,logIRRdelta,logORpsi,
                         ...,
                         nahead=0,
                         returntype='projection',
@@ -422,8 +436,9 @@ Cprojections <- function(year,
                         verbose=FALSE
                         ){
 
+
   ## avoiding warnings:
-  override <- logIRR <- logIRRdelta <- variable <- value <- time <- NULL
+  override <- variable <- value <- time <- NULL
   ## set up
   if(nahead==0 & returntype=='futureonly') stop("Can't have nahead=0 and only return future!")
   if(verbose) cat('Using Cprojections...\n')
@@ -432,6 +447,7 @@ Cprojections <- function(year,
 
   cat('...nahead = ',nahead,'...\n')
 
+  
   ## switch to fit if nahead==0
   if(nahead==0 & returntype=='projection'){
     returntype <- 'fit'
@@ -525,7 +541,15 @@ Cprojections <- function(year,
   known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
 
   ## for predictions
+  if(missing(TXf)) TXf <- rep(0.01,nahead) #TODO check length
+  if(missing(logIRR)) logIRR <- rep(0,nahead)
+  if(missing(logIRRdelta)) logIRRdelta <- rep(0,nahead)
+  if(missing(logORpsi)) logORpsi <- rep(0,nahead) #TODO
+
   future_known_tv_params <- known_tv_params[rep(nrow(Vhat),nahead),]
+  if(verbose) cat('logIRR = ',logIRR,'\n')
+  if(verbose) cat('logIRRdelta = ',logIRRdelta,'\n')
+  if(verbose) cat('logORpsi = ',logORpsi,'\n') #TODO
   ## NOTE interventions
   future_known_tv_params[,5] <- logIRR
   future_known_tv_params[,6] <- logIRRdelta

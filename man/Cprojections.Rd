@@ -14,6 +14,10 @@ Cprojections(
   sEM,
   Phat,
   sEP,
+  TXf,
+  logIRR,
+  logIRRdelta,
+  logORpsi,
   ...,
   nahead = 0,
   returntype = "projection",
@@ -39,6 +43,14 @@ Cprojections(
 \item{Phat}{Prevalence midpoints (NA if projection/imputation needed)}
 
 \item{sEP}{Prevalence uncertainty as SD (NA if projection/imputation needed)}
+
+\item{TXf}{Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)}
+
+\item{logIRR}{Log-hazard ratios to apply to incidence (assumed 1 if not given)}
+
+\item{logIRRdelta}{Log-hazard ratios to apply to detection hazard (assumed 1 if not given)}
+
+\item{logORpsi}{Log-hazard ratios to apply to treatment fatality (assumed 1 if not given)}
 
 \item{...}{Additional parameters to help tune away from defaults}
 
