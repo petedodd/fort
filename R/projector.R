@@ -467,10 +467,14 @@ Cprojections <- function(year,
 
   ## transformations NOTE reconsider
   Yhat <- log(Yhat)
-  Vhat <- cbind( rep(1,nrow(Yhat)), #I
+  Vhat <- cbind( rep(1/10,nrow(Yhat)), #I
                 rep(1/3,nrow(Yhat)),  #P
                 rep(1/10,nrow(Yhat)),  #N
-                rep(1/3,nrow(Yhat)) ) #D
+                rep(1/10,nrow(Yhat)) ) #D
+  ## Vhat <- cbind( rep(1,nrow(Yhat)), #I
+  ##               rep(1/3,nrow(Yhat)),  #P
+  ##               rep(1/10,nrow(Yhat)),  #N
+  ##               rep(1/3,nrow(Yhat)) ) #D
   if('override' %in% names(arguments)){
     if('Vhat' %in% names(override)){
       if(override[['Vhat']]=='literal'){
@@ -496,12 +500,13 @@ Cprojections <- function(year,
   ## other prior parameters
   sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
   momega0 <- -1.1
-  mpsi0 <- logit(0.5)## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
+  mpsi0 <- logit(0.4)## mortality lit
   somega0 <- 0.7
   spsi0 <- 0.3
 
   ## initial thetas
   initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1) #default rwI
+  initial_theta <- c(initial_theta,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS jj
   if('override' %in% names(arguments)){
     if('initial_theta' %in% names(override)){
       initial_theta <- override[['initial_theta']]
@@ -509,6 +514,7 @@ Cprojections <- function(year,
     }
   }
   initial_theta_ip <- c(logSI = -1,logsdelta=-1,logsomega=-1,logphiP=-1,logitpr=-1) #IP
+  initial_theta_ip<- c(initial_theta_ip,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS jj
   if('override' %in% names(arguments)){
     if('initial_theta_ip' %in% names(override)){
       initial_theta_ip <- override[['initial_theta_ip']]

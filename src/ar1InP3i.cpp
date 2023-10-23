@@ -16,10 +16,10 @@
 // [[Rcpp::export]]
 arma::vec a1_fn_ip(const arma::vec& theta, const arma::vec& known_params) {
   arma::vec a1(7);
-  a1(0) = known_params(0);
+  a1(0) = known_params(0) + theta(5);
   a1(1) = known_params(1);
-  a1(2) = known_params(2);
-  a1(3) = known_params(3);
+  a1(2) = known_params(2) + theta(6);
+  a1(3) = known_params(3) + theta(7);
   a1(4) = known_params(4);
   a1(5) = known_params(5);
   a1(6) = known_params(6);
@@ -214,6 +214,7 @@ arma::mat T_gn_ip(const unsigned int t, const arma::vec& alpha,
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ip4(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -221,6 +222,9 @@ double log_prior_pdf_ip4(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), +4, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -229,6 +233,7 @@ double log_prior_pdf_ip4(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ip3(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -236,6 +241,9 @@ double log_prior_pdf_ip3(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), +3, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -244,6 +252,7 @@ double log_prior_pdf_ip3(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ip2(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -251,6 +260,9 @@ double log_prior_pdf_ip2(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), +2, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -260,6 +272,7 @@ double log_prior_pdf_ip2(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ip1(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -267,6 +280,9 @@ double log_prior_pdf_ip1(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), +1, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -275,6 +291,7 @@ double log_prior_pdf_ip1(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ip0(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -282,6 +299,9 @@ double log_prior_pdf_ip0(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), 0.0, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -291,6 +311,7 @@ double log_prior_pdf_ip0(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ipn1(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -298,6 +319,9 @@ double log_prior_pdf_ipn1(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), -1, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -305,6 +329,7 @@ double log_prior_pdf_ipn1(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ipn2(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -312,6 +337,9 @@ double log_prior_pdf_ipn2(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), -2, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -319,6 +347,7 @@ double log_prior_pdf_ipn2(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ipn3(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -326,6 +355,9 @@ double log_prior_pdf_ipn3(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), -3, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
@@ -334,6 +366,7 @@ double log_prior_pdf_ipn3(const arma::vec& theta) {
 // log-prior pdf for theta
 // [[Rcpp::export]]
 double log_prior_pdf_ipn4(const arma::vec& theta) {
+  double ISW = 0.5;
   double noisehp = 1.0;
   double log_pdf =
     R::dnorm(theta(0), 0, noisehp, true) + // I noise
@@ -341,6 +374,9 @@ double log_prior_pdf_ipn4(const arma::vec& theta) {
     R::dnorm(theta(2), 0, noisehp, true)+   // delta noise NOTE change
     R::dnorm(theta(3), -1, 0.5, true)+   // phiIP
     R::dnorm(theta(4), -4, 0.1, true)+ 2 * log(1+exp(theta(4))) // logitN w/ below
+    // start extra on IS
+    +R::dnorm(theta(5), 0, ISW, true)+R::dnorm(theta(6), 0, ISW, true)+R::dnorm(theta(7), 0, ISW, true)
+    // end extra on IS
     - arma::accu(theta); //jacobian term
   return log_pdf;
 }
