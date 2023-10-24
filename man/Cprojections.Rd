@@ -14,10 +14,8 @@ Cprojections(
   sEM,
   Phat,
   sEP,
-  TXf,
   logIRR,
   logIRRdelta,
-  logORpsi,
   ...,
   nahead = 0,
   returntype = "projection",
@@ -36,37 +34,35 @@ Cprojections(
 
 \item{sEN}{Notifications uncertainty as SD (NA if projection/imputation needed)}
 
-\item{Mhat}{Deaths midpoints (NA if projection/imputation needed)}
+\item{Mhat}{Untreated Deaths midpoints (NA if projection/imputation needed)}
 
-\item{sEM}{Deaths uncertainty as SD (NA if projection/imputation needed)}
+\item{sEM}{Untreated Deaths uncertainty as SD (NA if projection/imputation needed)}
 
 \item{Phat}{Prevalence midpoints (NA if projection/imputation needed)}
 
 \item{sEP}{Prevalence uncertainty as SD (NA if projection/imputation needed)}
 
-\item{TXf}{Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)}
-
 \item{logIRR}{Log-hazard ratios to apply to incidence (assumed 1 if not given)}
 
 \item{logIRRdelta}{Log-hazard ratios to apply to detection hazard (assumed 1 if not given)}
-
-\item{logORpsi}{Log-hazard ratios to apply to treatment fatality (assumed 1 if not given)}
 
 \item{...}{Additional parameters to help tune away from defaults}
 
 \item{nahead}{how many years to project
 \itemize{
-\item `futureonly': (default) only returns projection
-\item `fit': returns SSM output for all times
-\item \code{projection}: returns inputs during data combined with projections after
+\item futureonly: (default) only returns projection
+\item fit: returns SSM output for all times with data
+\item projection: returns inputs during data combined with projections after
+\item projectionfit: combination of above
 }}
 
 \item{returntype}{Determines what is returned if projecting}
 
 \item{modeltype}{String to specify which SSM variant to use:
 \itemize{
-\item `rwI': (default) random walk for incidence. NOTE no indirect impact
-\item `IP': AR(1) on a mixture of log(Incidence) and log(Prevalence).
+\item rwI: (default) random walk for incidence. NOTE no indirect impact
+\item IP: AR(1) on a mixture of log(Incidence) and log(Prevalence).
+\item IP(n)k: AR(1) as above, but \loadmathjax\mjeqn{I_{t+1} = R\times I_t^(1-\mathrm{expit}(k))P_t^{\mathrm{expit}(k)} }{ascii}  with k=-k with n present. IP = IP0
 }}
 
 \item{verbose}{(Default=FALSE) Give more output for use in debugging.}

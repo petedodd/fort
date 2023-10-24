@@ -16,6 +16,7 @@ Imports:
     imputeTS,
     jsonlite,
     logitnorm,
+    mathjaxr,
     Rcpp,
     testthat
 LinkingTo: 

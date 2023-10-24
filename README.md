@@ -44,7 +44,3 @@ The server can be tested using the json data in the same folder:
 curl -X "POST" "http://127.0.0.1:8021/projection" -H 'Content-Type: application/json' -d @projection.json
 ```
 
-
-## TODO
-
-- introduce hyperparameter for IP model

@@ -192,7 +192,7 @@ arma::mat T_gn_ip(const unsigned int t, const arma::vec& alpha,
   Tg(2,1) = (rho * P)/Q; // dlogN/dlogP
   Tg(2,4) = omega * dQdo/Q; // dlogN/dlogomega
   Tg(2,5) = 1.0 + delta * dQdo/Q; // dlogN/dlogdelta
-  // log D 
+  // log D
   Tg(3,0) = ((1-rho) * I / OM)/Q;// dlogD/logI
   Tg(3,1) = rho * P/Q;// dlogD/logP
   Tg(3,4) = 1.0 + omega * dQdo/Q;// dlogD/logomega

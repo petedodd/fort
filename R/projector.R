@@ -222,10 +222,27 @@ projections <- function(year,
   I.sd <- I.mid <- N.mid <- I.lo <- I.hi <- N.lo <- N.hi <- M.mid <- M.sdx3.92 <- NULL
   M.lo <-  M.hi <- P.mid <- P.sd <- N.sd <- variable <- NULL
   ## completions
-  if(missing(TXf)) TXf <- rep(0,length(year))
   if(missing(HRd)) HRd <- rep(1,length(year))
   if(missing(HRi)) HRi <- rep(1,length(year))
   if(missing(ORt)) ORt <- rep(1,length(year))
+  if(missing(TXf)) TXf <- rep(0,length(year))
+  ## project/interpolate if any NAs in provided time series
+  if(any(is.na(HRd))){
+    HRd <- exp( imputeTS::na_kalman(log(HRd)) )
+    warning('Interpolating over NAs in HRd provided!')
+  }
+  if(any(is.na(HRi))){
+    HRi <- exp( imputeTS::na_kalman(log(HRi)) )
+    warning('Interpolating over NAs in HRi provided!')
+  }
+  if(any(is.na(ORt))){
+    ORt <- exp( imputeTS::na_kalman(log(ORt)) )
+    warning('Interpolating over NAs in ORt provided!')
+  }
+  if(any(is.na(TXf))){
+    TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
+    warning('Interpolating over NAs in TXf provided!')
+  } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
   if(modeltype=='failsafe'){ #============== FAILSAFE MODEL ==============
     ## incidence
     suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
@@ -294,10 +311,6 @@ projections <- function(year,
     ANS[pb:pe,c('M.lo','M.hi'):=list(pmax(0,M.mid-M.sdx3.92/2),M.mid+M.sdx3.92/2)]
     ANS[,M.sdx3.92:=NULL]
     ## add treated mortality back
-    ## project TXf
-    if(any(is.na(TXf))){
-      TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
-    } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
     ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] # addon mortality on treatment
     ## NOTE no extra uncertainty in line above
     ## computing this using duration assumption -
@@ -315,7 +328,8 @@ projections <- function(year,
   } else { #============== SSM versions ==============
     nahead <- which.max(!is.na(rev(Ihat)))-1 #assume NAs at back
     lastd <- length(Ihat)-nahead
-    ## TODO preprocess out NAs by interpolation if needed?
+
+    ## jj
     logIRR <- log(HRi[(lastd+1):length(HRd)])      #IRR on incidence
     logIRRdelta <- log(HRd[(lastd+1):length(HRd)]) #detection
     logORpsi <- log(ORt[(lastd+1):length(HRd)])    #deaths off treatment - not for use
@@ -324,10 +338,6 @@ projections <- function(year,
       Phat <- Ihat; sEP <- 2*sEI
       if(verbose) cat('No Phat supplied: making a guess from Ihat!\n')
     }
-    ## ## project TXf
-    ## if(any(is.na(TXf))){
-    ##   TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
-    ## } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
 
     didx <- 1:lastd #data range
     if(verbose) cat('...nahead=',nahead,'\n')
@@ -340,10 +350,8 @@ projections <- function(year,
                         Mhat=Mhat[didx],sEM=sEM[didx],
                         Phat=Phat[didx],sEP=sEP[didx],
                         nahead=nahead,
-                        TXf=TXf,
                         logIRR=logIRR,
                         logIRRdelta=logIRRdelta,
-                        logORpsi=logORpsi,
                         returntype=output,
                         modeltype=modeltype,
                         verbose=verbose,
@@ -396,23 +404,23 @@ projections <- function(year,
 ##' @param sEI Incidence uncertainty as SD (NA if projection/imputation needed)
 ##' @param Nhat Notifications midpoints (NA if projection/imputation needed)
 ##' @param sEN Notifications uncertainty as SD (NA if projection/imputation needed)
-##' @param Mhat Deaths midpoints (NA if projection/imputation needed)
-##' @param sEM Deaths uncertainty as SD (NA if projection/imputation needed)
+##' @param Mhat Untreated Deaths midpoints (NA if projection/imputation needed)
+##' @param sEM Untreated Deaths uncertainty as SD (NA if projection/imputation needed)
 ##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
 ##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
-##' @param TXf Treatment fatality midpoint (NA if projection/imputation needed, assumed 0 if not given)
 ##' @param logIRRdelta Log-hazard ratios to apply to detection hazard (assumed 1 if not given)
 ##' @param logIRR Log-hazard ratios to apply to incidence (assumed 1 if not given)
-##' @param logORpsi Log-hazard ratios to apply to treatment fatality (assumed 1 if not given)
 ##' @param ... Additional parameters to help tune away from defaults
 ##' @param returntype Determines what is returned if projecting
 ##' @param nahead how many years to project
-##' * `futureonly': (default) only returns projection
-##' * `fit': returns SSM output for all times
-##' * `projection`: returns inputs during data combined with projections after
+##' * futureonly: (default) only returns projection
+##' * fit: returns SSM output for all times with data
+##' * projection: returns inputs during data combined with projections after
+##' * projectionfit: combination of above
 ##' @param modeltype String to specify which SSM variant to use:
-##'  * `rwI': (default) random walk for incidence. NOTE no indirect impact
-##'  * `IP': AR(1) on a mixture of log(Incidence) and log(Prevalence).
+##' * rwI: (default) random walk for incidence. NOTE no indirect impact
+##' * IP: AR(1) on a mixture of log(Incidence) and log(Prevalence).
+##' * IP(n)k: AR(1) as above, but \loadmathjax\mjeqn{I_{t+1} = R\times I_t^(1-\mathrm{expit}(k))P_t^{\mathrm{expit}(k)} }{ascii}  with k=-k with n present. IP = IP0
 ##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @examples
@@ -422,13 +430,14 @@ projections <- function(year,
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @import bssm
+##' @import mathjaxr
 ##' @export
 Cprojections <- function(year,
                         Ihat,sEI,
                         Nhat,sEN,
                         Mhat,sEM,
                         Phat,sEP,
-                        TXf,logIRR,logIRRdelta,logORpsi,
+                        logIRR,logIRRdelta,
                         ...,
                         nahead=0,
                         returntype='projection',
@@ -471,10 +480,6 @@ Cprojections <- function(year,
                 rep(1/3,nrow(Yhat)),  #P
                 rep(1/10,nrow(Yhat)),  #N
                 rep(1/10,nrow(Yhat)) ) #D
-  ## Vhat <- cbind( rep(1,nrow(Yhat)), #I
-  ##               rep(1/3,nrow(Yhat)),  #P
-  ##               rep(1/10,nrow(Yhat)),  #N
-  ##               rep(1/3,nrow(Yhat)) ) #D
   if('override' %in% names(arguments)){
     if('Vhat' %in% names(override)){
       if(override[['Vhat']]=='literal'){
@@ -547,15 +552,12 @@ Cprojections <- function(year,
   known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
 
   ## for predictions
-  if(missing(TXf)) TXf <- rep(0.01,nahead) #TODO check length
   if(missing(logIRR)) logIRR <- rep(0,nahead)
   if(missing(logIRRdelta)) logIRRdelta <- rep(0,nahead)
-  if(missing(logORpsi)) logORpsi <- rep(0,nahead) #TODO
 
   future_known_tv_params <- known_tv_params[rep(nrow(Vhat),nahead),]
   if(verbose) cat('logIRR = ',logIRR,'\n')
   if(verbose) cat('logIRRdelta = ',logIRRdelta,'\n')
-  if(verbose) cat('logORpsi = ',logORpsi,'\n') #TODO
   ## NOTE interventions
   future_known_tv_params[,5] <- logIRR
   future_known_tv_params[,6] <- logIRRdelta
