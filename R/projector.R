@@ -210,7 +210,7 @@ projections <- function(year,
                         TXf,HRd,HRi,ORt,
                         ...,
                         nrep=500,
-                        output='projection', #TODO
+                        output='projection',
                         modeltype='failsafe',
                         returninternalfit=FALSE,
                         verbose=FALSE
@@ -328,11 +328,11 @@ projections <- function(year,
   } else { #============== SSM versions ==============
     nahead <- which.max(!is.na(rev(Ihat)))-1 #assume NAs at back
     lastd <- length(Ihat)-nahead
-
-    ## jj
+    ## take off deaths on treatment
+    Mhat <- Mhat - TXf * Nhat
+    if(any(Mhat[1:lastd]<0)) stop('Implied deaths on TB treatment exceed total TB mortality!')
     logIRR <- log(HRi[(lastd+1):length(HRd)])      #IRR on incidence
     logIRRdelta <- log(HRd[(lastd+1):length(HRd)]) #detection
-    logORpsi <- log(ORt[(lastd+1):length(HRd)])    #deaths off treatment - not for use
     if(all(is.na(Phat))){
       ## make guess for P
       Phat <- Ihat; sEP <- 2*sEI
@@ -358,6 +358,8 @@ projections <- function(year,
                         ...
                         )
     if(verbose) cat('...Cprojections returned OK...\n')
+
+
   }
   if(modeltype!='failsafe' & !returninternalfit){
     ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
@@ -380,14 +382,22 @@ projections <- function(year,
     names(ANS)[n=='hi_Prevalence'] <- 'P.hi'
     ANS$year <- year[ANS$year]
     ANS <- ANS[!is.na(year)] #removes 1 ahead if 'fit'
+    ## creating SDs
     ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
            list((I.hi-I.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92)]
+    ## adding back on deaths off treatment
+    ANS[,M.mid:=M.mid + TXf * N.mid]
+    ANS[,M.sd:=sqrt(M.sd^2 + TXf^2 * N.sd^2)]
+    ANS[,M.hi:=M.mid + 1.96*M.sd]
+    ANS[,M.lo:=pmax(M.mid - 1.96*M.sd,0)]
+    ## reorder
     setcolorder(ANS,neworder = c("year",
                                  "I.mid", "I.sd",  "I.lo", "I.hi",
-                                 "N.mid", "N.sd",  "N.lo", "N.hi", 
+                                 "N.mid", "N.sd",  "N.lo", "N.hi",
                                  "M.mid", "M.sd",  "M.lo", "M.hi",
                                  "P.mid", "P.sd",  "P.lo", "P.hi" ))
   }
+  if(modeltype!='failsafe' & returninternalfit) warning("Note internal mortality excludes deaths on TB treatment!")
   ## output
   ANS
 }
@@ -618,8 +628,8 @@ Cprojections <- function(year,
 
   ## rwI
   modelrwi <- bssm::ssm_nlg(y = Yhat,
-                            a1=pntrsrw$a1, P1 = pntrsrw$P1, 
-                            Z = pntrsrw$Z_fn, H = pntrsrw$H_fn, T = pntrsrw$T_fn, R = pntrsrw$R_fn, 
+                            a1=pntrsrw$a1, P1 = pntrsrw$P1,
+                            Z = pntrsrw$Z_fn, H = pntrsrw$H_fn, T = pntrsrw$T_fn, R = pntrsrw$R_fn,
                             Z_gn = pntrsrw$Z_gn, T_gn = pntrsrw$T_gn,
                             theta = initial_theta, log_prior_pdf = pntrsrw$log_prior_pdf,
                             known_params = known_params, known_tv_params = known_tv_params,
@@ -650,7 +660,7 @@ Cprojections <- function(year,
   }
 
   modelip <- bssm::ssm_nlg(y = Yhat,
-                           a1=pntrsip$a1, P1 = pntrsip$P1,
+                           a1=pntrsip$a1, P1 = pntrsip$P1, #NOTE
                            Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
                            T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
                            Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
