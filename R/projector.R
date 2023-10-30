@@ -430,7 +430,7 @@ projections <- function(year,
 ##' @param modeltype String to specify which SSM variant to use:
 ##' * rwI: (default) random walk for incidence. NOTE no indirect impact
 ##' * IP: AR(1) on a mixture of log(Incidence) and log(Prevalence).
-##' * IP(n)k: AR(1) as above, but \loadmathjax\mjeqn{I_{t+1} = R\times I_t^(1-\mathrm{expit}(k))P_t^{\mathrm{expit}(k)} }{ascii}  with k=-k with n present. IP = IP0
+##' * IP(n)k: AR(1) as above, but \loadmathjax\mjeqn{I_{t+1} = R\times I_t^{(1-\mathrm{expit}(k))}P_t^{\mathrm{expit}(k)} + \varepsilon_t}{I(t+1) =R x I(t)^(1-expit(k)) x P(t)^expit(k) + e(t)}  with k=-k with n present. IP = IP0
 ##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @examples
