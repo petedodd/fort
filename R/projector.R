@@ -628,7 +628,7 @@ Cprojections <- function(year,
 
   ## rwI
   modelrwi <- bssm::ssm_nlg(y = Yhat,
-                            a1=pntrsrw$a1, P1 = pntrsrw$P1,
+                            a1=pntrsrw$a1_fn, P1 = pntrsrw$P1_fn,
                             Z = pntrsrw$Z_fn, H = pntrsrw$H_fn, T = pntrsrw$T_fn, R = pntrsrw$R_fn,
                             Z_gn = pntrsrw$Z_gn, T_gn = pntrsrw$T_gn,
                             theta = initial_theta, log_prior_pdf = pntrsrw$log_prior_pdf,
@@ -660,7 +660,7 @@ Cprojections <- function(year,
   }
 
   modelip <- bssm::ssm_nlg(y = Yhat,
-                           a1=pntrsip$a1, P1 = pntrsip$P1, #NOTE
+                           a1=pntrsip$a1_fn_ip, P1 = pntrsip$P1_fn_ip, #NOTE
                            Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
                            T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
                            Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
