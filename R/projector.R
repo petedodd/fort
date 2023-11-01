@@ -1,5 +1,3 @@
-## currently slow simulation-based projector
-
 ## not exported as temporary: a utility function used to create noisy data replicates
 ##' Utility For Simulation-based Structural Time Series Fitting & Projection
 ##'
@@ -96,8 +94,7 @@ mcmcsmry <- function(fit){
 ##' @importFrom stats deltat frequency quantile rnorm sd ts tsp
 ##' @examples
 ##'
-##' # Some fake data for basic examples:
-##' 
+##' ## Some fake data for basic examples:
 ##' tmp <- structure(list(year = c(2000, 2001, 2002, 2003, 2004, 2005, 2006,
 ##' 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017,
 ##' 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026),
@@ -133,17 +130,16 @@ mcmcsmry <- function(fit){
 ##' 1.14876519324219, 1.22099474332274, 1.21995493069537, 1.2210104574169,
 ##' 1.21500236771799, NA, NA, NA, NA, NA, NA, NA)), row.names = c(NA,-27L), class = "data.frame")
 ##'
-##' # Default projections using failsafe method:
-##'
+##' ## Default projections using failsafe method:
 ##' \dontrun{
 ##' ans0 <- projections(tmp$year,tmp$Ihat,tmp$sEI,tmp$Nhat,tmp$sEN,tmp$Mhat,tmp$sEM)
 ##' }
 ##'
 ##'
-##' # Create some treatment CFR data:
+##' ## Create some treatment CFR data:
 ##' tmp$TXf <- tmp$Nhat/1e3
 ##'
-##' # Failsafe run using treatment CFR data:
+##' ## Failsafe run using treatment CFR data:
 ##' \dontrun{
 ##' ans1 <- projections(year=tmp$year,
 ##'          Ihat=tmp$Ihat,sEI=tmp$sEI,
@@ -152,13 +148,13 @@ mcmcsmry <- function(fit){
 ##'          Phat=tmp$Mhat,sEP=tmp$sEM,
 ##'          TXf = tmp$TXf)
 ##' }
-##' 
-##' # Create intervention data:
+##'
+##' ## Create intervention data:
 ##' HRd <- HRi <- ORt <- rep(1,length(tmp$Nhat))
 ##' HRd[is.na(tmp$Nhat)] <- HRi[is.na(tmp$Nhat)] <- 1.1
 ##' ORt[is.na(tmp$Nhat)] <- 0.7
 ##'
-##' # Failsafe run with interventions:
+##' ## Failsafe run with interventions:
 ##' \dontrun{
 ##' ans2 <- projections(year=tmp$year,
 ##'          Ihat=tmp$Ihat,sEI=tmp$sEI,
@@ -170,24 +166,9 @@ mcmcsmry <- function(fit){
 ##' ans2
 ##' }
 ##'
-##' ## example for rwI SSM model
-##' \dontrun{
-##' ans3 <- projections(year=tmp$year,
-##'           Ihat=tmp$Ihat,sEI=tmp$sEI,
-##'           Nhat=tmp$Nhat,sEN=tmp$sEN,
-##'           Mhat=tmp$Mhat,sEM=tmp$sEM,
-##'           Phat=tmp$Mhat,sEP=tmp$sEM,
-##'           TXf = tmp$TXf,ORt=ORt,
-##'           HRd=HRd,HRi=HRi,
-##'           modeltype = 'rwI',
-##'           output='projection')
-##'
-##' ans3
-##' }
-##'
 ##' ## example for IP SSM model
 ##' \dontrun{
-##' ans4 <- projections(year=tmp$year,
+##' ans3 <- projections(year=tmp$year,
 ##'           Ihat=tmp$Ihat,sEI=tmp$sEI,
 ##'           Nhat=tmp$Nhat,sEN=tmp$sEN,
 ##'           Mhat=tmp$Mhat,sEM=tmp$sEM,
@@ -196,7 +177,7 @@ mcmcsmry <- function(fit){
 ##'           modeltype = 'IP',
 ##'           output='projection')
 ##'
-##' ans4
+##' ans3
 ##' }
 ##'
 ##' @author Pete Dodd
@@ -411,32 +392,82 @@ projections <- function(year,
 ##' @title Cprojections
 ##' @param year vector of years for which there is data or an estimate is required
 ##' @param Ihat Incidence midpoints (NA if projection/imputation needed)
-##' @param sEI Incidence uncertainty as SD (NA if projection/imputation needed)
+##' @param sEI Incidence uncertainty as SD (NOTE not used by default)
 ##' @param Nhat Notifications midpoints (NA if projection/imputation needed)
-##' @param sEN Notifications uncertainty as SD (NA if projection/imputation needed)
+##' @param sEN Notifications uncertainty as SD (NOTE not used by default)
 ##' @param Mhat Untreated Deaths midpoints (NA if projection/imputation needed)
-##' @param sEM Untreated Deaths uncertainty as SD (NA if projection/imputation needed)
+##' @param sEM Untreated Deaths uncertainty as SD (NOTE not used by default)
 ##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
-##' @param sEP Prevalence uncertainty as SD (NA if projection/imputation needed)
+##' @param sEP Prevalence uncertainty as SD (NOTE not used by default)
 ##' @param logIRRdelta Log-hazard ratios to apply to detection hazard (assumed 1 if not given)
 ##' @param logIRR Log-hazard ratios to apply to incidence (assumed 1 if not given)
-##' @param ... Additional parameters to help tune away from defaults
+##' @param ... Additional parameters to help tune away from defaults. Read the code if you want to use.
 ##' @param returntype Determines what is returned if projecting
-##' @param nahead how many years to project
+##' * projection (default): returns inputs during data combined with projections after
 ##' * futureonly: (default) only returns projection
 ##' * fit: returns SSM output for all times with data
-##' * projection: returns inputs during data combined with projections after
 ##' * projectionfit: combination of above
+##' @param nahead how many years to project
 ##' @param modeltype String to specify which SSM variant to use:
 ##' * rwI: (default) random walk for incidence. NOTE no indirect impact
-##' * IP: AR(1) on a mixture of log(Incidence) and log(Prevalence).
+##' * IP (default): AR(1) on a mixture of log(Incidence) and log(Prevalence).
 ##' * IP(n)k: AR(1) as above, but \loadmathjax\mjeqn{I_{t+1} = R\times I_t^{(1-\mathrm{expit}(k))}P_t^{\mathrm{expit}(k)} + \varepsilon_t}{I(t+1) =R x I(t)^(1-expit(k)) x P(t)^expit(k) + e(t)}  with k=-k with n present. IP = IP0
 ##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @examples
-##' 
-##' 1+1 #TODO
-##' 
+##'
+##' ## Some fake data for basic examples:
+##' tmp <- structure(list(year = c(2000, 2001, 2002, 2003, 2004, 2005, 2006,
+##' 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017,
+##' 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026),
+##' Ihat = c(288.533950004829,287.93322935538, 286.858763024248, 285.088943283027, 282.422826602471,
+##' 278.659650849076, 273.695148906889, 267.782862966495, 261.238262319895,
+##' 254.351459991824, 247.410089922074, 240.673040367854, 234.284291413532,
+##' 228.355885062355, 222.940587325497, 216.730763815714, 210.520940305932,
+##' 204.489042196973, 198.629971526196, 192.938776399049, NA, NA,NA, NA, NA, NA, NA),
+##' sEI = c(82.4505044782574, 82.2788459607041,81.971812555474, 81.4660788612642,
+##' 80.7042243167865, 79.6288801248133, 78.2102512754221, 76.5207883326334,
+##' 74.6506378711457, 72.6827008981588, 70.6991701325661, 68.7740241983581,
+##' 66.9484062245379, 65.2543329198881,50.0532444478606, 45.4237612044787,
+##' 39.3249190909355, 36.161588804207,35.1254802829674, 34.1190584700803,
+##' NA, NA, NA, NA, NA, NA, NA),
+##' Nhat = c(105.597560166138, 100.937200476189, 97.0396342996481,
+##' 96.5595726784802, 100.580594702341, 100.752701403095, 105.434702191619,
+##' 109.52777439355, 110.960319162264, 111.019454219404, 108.554358614967,
+##' 105.891527759511, 101.900468674008, 97.1161848558792, 124.231710859869,
+##' 127.247487405267, 133.171236539199, 123.233182638182, 141.107743265778,
+##' 158.247577690289, NA, NA, NA, NA, NA, NA, NA),
+##' sEN = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, NA, NA,
+##' NA, NA, NA, NA, NA),
+##' Mhat = c(67.3923314966283, 64.9639449981795,
+##' 62.7591216508678, 59.9862798209979, 56.8774350966658, 55.2906791480839,
+##' 53.3253778160102, 52.5869006070828, 49.256969022149, 47.0520258424162,
+##' 44.4951773213113, 42.955216531147, 41.6499649964408, 40.4263075158909,
+##' 37.4464515389009, 35.8778532613629, 34.6111975994581, 34.0979910751733,
+##' 33.4345311257622, 32.5925643081621, NA, NA, NA, NA, NA, NA, NA),
+##' sEM = c(5.50426791938695, 4.99926659859985, 4.62031120755379,
+##' 4.27306764998549, 3.9284689776149, 3.88167033820785, 3.73219080309218,
+##' 2.33566032352505, 3.18594599695718, 2.89690790680736, 2.67494608005328,
+##' 2.52339290625221, 2.49578415017652, 1.43500737514435, 1.10097123857461,
+##' 1.14876519324219, 1.22099474332274, 1.21995493069537, 1.2210104574169,
+##' 1.21500236771799, NA, NA, NA, NA, NA, NA, NA)), row.names = c(NA,-27L), class = "data.frame")
+##'
+##' ## preparing the data
+##' nahead <- which.max(!is.na(rev(tmp$Ihat)))-1 #NAs at back
+##' lastd <- nrow(tmp)-nahead                    #last index with data
+##' didx <- 1:lastd                              #data range
+##' tmp$Phat <- tmp$Ihat; tmp$sEP <- 2*tmp$sEI   #rough guess for P
+##'
+##' ## running the SSM projection
+##' \dontrun{
+##' ansC <- Cprojections(tmp$year[didx],
+##'                      tmp$Ihat[didx],tmp$sEI[didx],
+##'                      tmp$Nhat[didx],tmp$sEN[didx],
+##'                      tmp$Mhat[didx],tmp$sEM[didx],
+##'                      tmp$Phat[didx],tmp$sEP[didx],
+##'                      nahead=nahead)
+##' }
+##'
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @import bssm
@@ -451,7 +482,7 @@ Cprojections <- function(year,
                         ...,
                         nahead=0,
                         returntype='projection',
-                        modeltype='rwI',
+                        modeltype='IP',
                         verbose=FALSE
                         ){
 
@@ -466,7 +497,6 @@ Cprojections <- function(year,
 
   cat('...nahead = ',nahead,'...\n')
 
-  
   ## switch to fit if nahead==0
   if(nahead==0 & returntype=='projection'){
     returntype <- 'fit'
@@ -515,7 +545,7 @@ Cprojections <- function(year,
   ## other prior parameters
   sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
   momega0 <- -1.1
-  mpsi0 <- logit(0.4)## mortality lit
+  mpsi0 <- logit(0.75)## mortality lit
   somega0 <- 0.7
   spsi0 <- 0.3
 
@@ -572,7 +602,7 @@ Cprojections <- function(year,
   future_known_tv_params[,5] <- logIRR
   future_known_tv_params[,6] <- logIRRdelta
 
-  tt3SNMZ <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
+  SNMZ <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
                'logomega','logdelta','psi')
 
 
@@ -634,7 +664,7 @@ Cprojections <- function(year,
                             theta = initial_theta, log_prior_pdf = pntrsrw$log_prior_pdf,
                             known_params = known_params, known_tv_params = known_tv_params,
                             n_states = 7, n_etas = 4,
-                            state_names = tt3SNMZ)
+                            state_names = SNMZ)
 
 
   ## IP
@@ -667,7 +697,7 @@ Cprojections <- function(year,
                            theta = initial_theta_ip, log_prior_pdf = logIPprior,
                            known_params = known_params, known_tv_params = known_tv_params,
                            n_states = 7, n_etas = 4,
-                           state_names = tt3SNMZ)
+                           state_names = SNMZ)
 
   ## choose model to use
 

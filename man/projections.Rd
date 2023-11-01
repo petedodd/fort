@@ -81,8 +81,7 @@ Top level main function for use in generating projections of TB notifications, i
 }
 \examples{
 
-# Some fake data for basic examples:
-
+## Some fake data for basic examples:
 tmp <- structure(list(year = c(2000, 2001, 2002, 2003, 2004, 2005, 2006,
 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017,
 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026),
@@ -118,17 +117,16 @@ sEM = c(5.50426791938695, 4.99926659859985, 4.62031120755379,
 1.14876519324219, 1.22099474332274, 1.21995493069537, 1.2210104574169,
 1.21500236771799, NA, NA, NA, NA, NA, NA, NA)), row.names = c(NA,-27L), class = "data.frame")
 
-# Default projections using failsafe method:
-
+## Default projections using failsafe method:
 \dontrun{
 ans0 <- projections(tmp$year,tmp$Ihat,tmp$sEI,tmp$Nhat,tmp$sEN,tmp$Mhat,tmp$sEM)
 }
 
 
-# Create some treatment CFR data:
+## Create some treatment CFR data:
 tmp$TXf <- tmp$Nhat/1e3
 
-# Failsafe run using treatment CFR data:
+## Failsafe run using treatment CFR data:
 \dontrun{
 ans1 <- projections(year=tmp$year,
          Ihat=tmp$Ihat,sEI=tmp$sEI,
@@ -138,12 +136,12 @@ ans1 <- projections(year=tmp$year,
          TXf = tmp$TXf)
 }
 
-# Create intervention data:
+## Create intervention data:
 HRd <- HRi <- ORt <- rep(1,length(tmp$Nhat))
 HRd[is.na(tmp$Nhat)] <- HRi[is.na(tmp$Nhat)] <- 1.1
 ORt[is.na(tmp$Nhat)] <- 0.7
 
-# Failsafe run with interventions:
+## Failsafe run with interventions:
 \dontrun{
 ans2 <- projections(year=tmp$year,
          Ihat=tmp$Ihat,sEI=tmp$sEI,
@@ -155,24 +153,9 @@ ans2 <- projections(year=tmp$year,
 ans2
 }
 
-## example for rwI SSM model
-\dontrun{
-ans3 <- projections(year=tmp$year,
-          Ihat=tmp$Ihat,sEI=tmp$sEI,
-          Nhat=tmp$Nhat,sEN=tmp$sEN,
-          Mhat=tmp$Mhat,sEM=tmp$sEM,
-          Phat=tmp$Mhat,sEP=tmp$sEM,
-          TXf = tmp$TXf,ORt=ORt,
-          HRd=HRd,HRi=HRi,
-          modeltype = 'rwI',
-          output='projection')
-
-ans3
-}
-
 ## example for IP SSM model
 \dontrun{
-ans4 <- projections(year=tmp$year,
+ans3 <- projections(year=tmp$year,
           Ihat=tmp$Ihat,sEI=tmp$sEI,
           Nhat=tmp$Nhat,sEN=tmp$sEN,
           Mhat=tmp$Mhat,sEM=tmp$sEM,
@@ -181,7 +164,7 @@ ans4 <- projections(year=tmp$year,
           modeltype = 'IP',
           output='projection')
 
-ans4
+ans3
 }
 
 }
