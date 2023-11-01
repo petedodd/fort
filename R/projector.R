@@ -81,14 +81,14 @@ mcmcsmry <- function(fit){
 ##' @param HRd Hazard ratios to apply to detection hazard (assumed 1 if not given)
 ##' @param HRi Hazard ratios to apply to incidence (assumed 1 if not given)
 ##' @param ORt Hazard ratios to apply to treatment fatality (assumed 1 if not given)
-##' @param nrep number of replicates used - NOTE likely to be temporary
-##' @param ... Additional parameters to help tune away from defaults
-##' @param output Return data + projection ('projection') or fit + projection ('fit')  or futureonly
+##' @param nrep number of replicates used (NOTE only relevant to failsafe modeltype). Default 500.
+##' @param ... Additional parameters to help tune away from defaults. Read the code if you want to use.
+##' @param output Return data + projection ('projection') or fit + projection ('fit')  or 'futureonly'
 ##' @param modeltype Which version to use:
-##'   * `failsafe': the failsafe model using simulation independent timeseries models
-##'   * `rwI': SSM with random walk for incidence. NOTE no indirect impact
-##'   * `IP': SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence).
-##' @param returninternalfit (default FALSE) return the internal estimated states (only when returntype=='fit')
+##'   * failsafe (default): the failsafe model using simulation independent timeseries models
+##'   * rwI: SSM with random walk for incidence. NOTE no indirect impact
+##'   * IP: SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence). For variants, see Cprojections.
+##' @param returninternalfit (default FALSE) return the SSM internal estimated states (only relevant when returntype=='fit' and when using SSM model variants)
 ##' @param verbose (Default=FALSE) Give more output for use in debugging.
 ##' @return A data.frame/data.table with the projections and uncertainty
 ##' @importFrom stats deltat frequency quantile rnorm sd ts tsp

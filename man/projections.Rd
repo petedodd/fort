@@ -53,20 +53,20 @@ projections(
 
 \item{ORt}{Hazard ratios to apply to treatment fatality (assumed 1 if not given)}
 
-\item{...}{Additional parameters to help tune away from defaults}
+\item{...}{Additional parameters to help tune away from defaults. Read the code if you want to use.}
 
-\item{nrep}{number of replicates used - NOTE likely to be temporary}
+\item{nrep}{number of replicates used (NOTE only relevant to failsafe modeltype). Default 500.}
 
-\item{output}{Return data + projection ('projection') or fit + projection ('fit')  or futureonly}
+\item{output}{Return data + projection ('projection') or fit + projection ('fit')  or 'futureonly'}
 
 \item{modeltype}{Which version to use:
 \itemize{
-\item `failsafe': the failsafe model using simulation independent timeseries models
-\item `rwI': SSM with random walk for incidence. NOTE no indirect impact
-\item `IP': SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence).
+\item failsafe (default): the failsafe model using simulation independent timeseries models
+\item rwI: SSM with random walk for incidence. NOTE no indirect impact
+\item IP: SSM with AR(1) on a mixture of log(Incidence) and log(Prevalence). For variants, see Cprojections.
 }}
 
-\item{returninternalfit}{(default FALSE) return the internal estimated states (only when returntype=='fit')}
+\item{returninternalfit}{(default FALSE) return the SSM internal estimated states (only relevant when returntype=='fit' and when using SSM model variants)}
 
 \item{verbose}{(Default=FALSE) Give more output for use in debugging.}
 }
