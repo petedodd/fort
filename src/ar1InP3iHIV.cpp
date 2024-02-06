@@ -1,4 +1,4 @@
-// 7d states as: I,P,N,D, omega,delta,psi
+// 10-D states as: I,P,N,D, omega,delta,psi; Pp,omegap, irr
 // means of initial states - mI0,mP0,mN0,mD0
 // sd of initial states - sI0,sP0,sN0,sD0
 // arrange as: mI0 - 0,mP0 - 1,mN0 - 2,mD0 - 3,momega - 4, mdelta - 5, mpsi - 6,
@@ -12,6 +12,18 @@
 
 // Unknown parameters theta:
 
+
+// // a couple of utility functions
+// double odds (double x){
+//   return x/(1.0-x);
+// }
+// double iodds( double x){
+//   return x/(1.0+x);
+// }
+
+// NOTE on odds
+// iodds(R*odds(x)) = 
+// [R *x/(1-x)]/[1+R *x/(1-x)] = [R*x]/[1-x + R*x]
 
 // Function for the prior mean of alpha_1
 // [[Rcpp::export]]
@@ -108,18 +120,20 @@ arma::mat Z_gn_ip(const unsigned int t, const arma::vec& alpha,
 }
 
 
+// deltap / (Omegap + deltap) = delta / (Omega + delta) = CDR
+// delta/Omega = iodds(CDR) = deltap/Omegap
+
 // T function
 // [[Rcpp::export]]
-arma::vec T_fn_ip(const unsigned int t, const arma::vec& alpha,
+arma::vec T_fn_ipH(const unsigned int t, const arma::vec& alpha,
                const arma::vec& theta, const arma::vec& known_params,
                const arma::mat& known_tv_params) {
-
+  // 10-D states as: I,P,N,D, omega,delta,psi; Pp,omegap, irr
   // known parms
   double momega = known_params(4);
   double mdelta = known_params(5);
   double mpsi = known_params(6);
-
-  // I,P,N,D,  omega,delta,psi
+  // I,P,N,D,  omega,delta,psi, omegap, irr
   double I = exp(alpha(0));     // now transformed
   double P = exp(alpha(1));     // now transformed
   double N = exp(alpha(2)); double D = exp(alpha(3)); // also transformed
@@ -130,34 +144,52 @@ arma::vec T_fn_ip(const unsigned int t, const arma::vec& alpha,
   double rho = ( 1-exp(-OM))/OM; // useful
   double Q = (1-rho) * I / OM + rho * P; // cumulative P for use in D & N
   double pr = 1.0 / (1.0 + exp(-theta(4)));
+  // PLHIV
+  double Pp = exp(alpha(7));
+  double omegap = exp(alpha(8));
+  double irr = exp(alpha(9));
+  double h = known_tv_params(t,5);  // NOTE 5 is HIV prevalence
+  double H = irr * h / (1-h+irr*h); // NOTE see NOTE on odds
+  double In = I * H;
+  double Ip = I * (1-H);
+  double deltap = omegap * delta / omega; // see NOTE above; enforces same CDR in HIV+
+  double OMp = omegap + deltap;
+  double rhop = ( 1-exp(-OMp))/OMp; // useful
+  double Qp = (1-rhop) * Ip / OMp + rhop * Pp; // cumulative P for use in D & N
   // dynamics
-  arma::vec alpha_new(7);
-  // log I: I_{t+1} = exp(θ_3) ((1-p)I_{t} + p.P_t);   p=ilogit( θ_4 ) 
-  // alpha_new(0) = log( (1-pr) * I + pr * P ) + theta(3); // see above
-  alpha_new(0) = (1-pr) * alpha(0) + pr * alpha(1)  + theta(3) + known_tv_params(t,4); // log weighted average
-  // log P
-  alpha_new(1) = log(I * rho + P * exp(-OM) );
+  arma::vec alpha_new(10);
+  // I_{t+1} = exp(θ_3) * (I_{t}^{1-p} * P_t^p);   p=ilogit( θ_4 );
+  // NOTE just use HIV-ve prevalence
+  // alpha_new(0) = (1-pr) * alpha(0) + pr * logsumexp(alpha(1),alpha(7)) + theta(3) + known_tv_params(t,4); //
+  alpha_new(0) = (1-pr) * alpha(0) + pr * alpha(1) + theta(3) + known_tv_params(t,4); //
+  // log P: inflow only HIV-ve TB incidence
+  alpha_new(1) = log(In * rho + P * exp(-OM) );
   // log N
-  alpha_new(2) = log(delta) + log(Q); // change in this and below
+  alpha_new(2) = logsumexp(log(delta) + log(Q), log(deltap) + log(Qp)); // 
   // log D
-  alpha_new(3) = log(psi) + log(omega) + log(Q);
+  alpha_new(3) = logsumexp(log(psi) + log(omega) + log(Q),
+                           log(deltap) + log(Qp)); // NOTE assuming untreated CFR=1 -> log(psip) = 0
   // log-omega
   alpha_new(4) = alpha(4);
   // log-delta
   alpha_new(5) = alpha(5); // NOTE interventions not here
   // logit-psi
   alpha_new(6) = mpsi;
-
+  // log-Pp
+  alpha_new(7) = log(Ip * rhop + Pp * exp(-OMp) ); //
+  // log-omegap
+  alpha_new(8) = alpha(8);
+  // log-irr
+  alpha_new(9) = alpha(9);
   return alpha_new;
 }
 
 // Jacobian of T function
 // [[Rcpp::export]]
-arma::mat T_gn_ip(const unsigned int t, const arma::vec& alpha, 
+arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha, 
                const arma::vec& theta, const arma::vec& known_params, 
                const arma::mat& known_tv_params) {
-
-  // I,P,N,D,  omega,delta,psi
+  // I,P,N,D,  omega,delta,psi, omegap, irr
   double I = exp(alpha(0));
   double P = exp(alpha(1));
   double N = exp(alpha(2)); double D = exp(alpha(3));
@@ -177,7 +209,7 @@ arma::mat T_gn_ip(const unsigned int t, const arma::vec& alpha,
   double Dt1 = psi * omega * Q;
   double pr = 1.0 / (1.0 + exp(-theta(4)));
   // I,P,N,D,  omega,delta,psi
-  arma::mat Tg(7, 7, arma::fill::zeros);
+  arma::mat Tg(9, 9, arma::fill::zeros);
   // log I: I_{t+1} = exp(θ_3) ((1-p)I_{t} + p.P_t);   p=ilogit( θ_4 ) 
   // Tg(0,0) = (1-pr) * I / log( (1-pr) * I + pr * P );   // dlog I/d log I
   // Tg(0,1) = pr * P /log( (1-pr) * I + pr * P );   // dlog I/d log P
@@ -204,11 +236,63 @@ arma::mat T_gn_ip(const unsigned int t, const arma::vec& alpha,
   Tg(4,4) = 1.0;
   // log-delta
   Tg(5,5) = 1.0;
+  // log-omegap
+  Tg(7,7) = 1.0;
+  // log-irr
+  Tg(8,8) = 1.0;
+
   return Tg;
 }
 
 
+double logsumexp(double logA, double logB){
+  if(logA > logB){
+    return logA + std::log1p(exp(logB-logA));
+  } else{
+    return logB + std::log1p(exp(logA-logB));
+  }
+}
 
+// double logsumexp(double nums[], size_t ct) {
+//   double max_exp = nums[0], sum = 0.0;
+//   size_t i;
+
+//   for (i = 1 ; i < ct ; i++)
+//     if (nums[i] > max_exp)
+//       max_exp = nums[i];
+
+//   for (i = 0; i < ct ; i++)
+//     sum += exp(nums[i] - max_exp);
+
+//   return log(sum) + max_exp;
+// }
+
+// #include "logsumexp.h"
+
+// #ifdef HAVE_LONG_DOUBLE
+// #  define LDOUBLE long double
+// #  define EXPL expl
+// #else
+// #  define LDOUBLE double
+// #  define EXPL exp
+// #endif
+
+// // [[Rcpp::export]]
+// double logSumExp(const arma::vec& x) {
+//   unsigned int maxi = x.index_max();
+//   LDOUBLE maxv = x(maxi);
+//   if (!(maxv > -arma::datum::inf)) {
+//     return -arma::datum::inf;
+//   }
+//   LDOUBLE cumsum = 0.0;
+//   for (unsigned int i = 0; i < x.n_elem; i++) {
+//     if ((i != maxi) && (x(i) > -arma::datum::inf)) {
+//       cumsum += EXPL(x(i) - maxv);
+//     }
+//   }
+  
+//   return maxv + log1p(cumsum);
+// }
 
 // ================ hyperprior variants ==================
 
