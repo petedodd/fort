@@ -651,6 +651,41 @@ RcppExport SEXP _fort_create_xptrs_ip_all() {
     UNPROTECT(1);
     return rcpp_result_gen;
 }
+// logsumexp
+double logsumexp(double logA, double logB);
+static SEXP _fort_logsumexp_try(SEXP logASEXP, SEXP logBSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< double >::type logA(logASEXP);
+    Rcpp::traits::input_parameter< double >::type logB(logBSEXP);
+    rcpp_result_gen = Rcpp::wrap(logsumexp(logA, logB));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_logsumexp(SEXP logASEXP, SEXP logBSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_logsumexp_try(logASEXP, logBSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
 // a1_fn_ipH
 arma::vec a1_fn_ipH(const arma::vec& theta, const arma::vec& known_params);
 static SEXP _fort_a1_fn_ipH_try(SEXP thetaSEXP, SEXP known_paramsSEXP) {
@@ -1256,6 +1291,7 @@ static int _fort_RcppExport_validate(const char* sig) {
         signatures.insert("double(*log_prior_pdf_ipn3)(const arma::vec&)");
         signatures.insert("double(*log_prior_pdf_ipn4)(const arma::vec&)");
         signatures.insert("Rcpp::List(*create_xptrs_ip_all)()");
+        signatures.insert("double(*logsumexp)(double,double)");
         signatures.insert("arma::vec(*a1_fn_ipH)(const arma::vec&,const arma::vec&)");
         signatures.insert("arma::mat(*P1_fn_ipH)(const arma::vec&,const arma::vec&)");
         signatures.insert("arma::mat(*R_fn_ipH)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
@@ -1296,6 +1332,7 @@ RcppExport SEXP _fort_RcppExport_registerCCallable() {
     R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn3", (DL_FUNC)_fort_log_prior_pdf_ipn3_try);
     R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn4", (DL_FUNC)_fort_log_prior_pdf_ipn4_try);
     R_RegisterCCallable("fort", "_fort_create_xptrs_ip_all", (DL_FUNC)_fort_create_xptrs_ip_all_try);
+    R_RegisterCCallable("fort", "_fort_logsumexp", (DL_FUNC)_fort_logsumexp_try);
     R_RegisterCCallable("fort", "_fort_a1_fn_ipH", (DL_FUNC)_fort_a1_fn_ipH_try);
     R_RegisterCCallable("fort", "_fort_P1_fn_ipH", (DL_FUNC)_fort_P1_fn_ipH_try);
     R_RegisterCCallable("fort", "_fort_R_fn_ipH", (DL_FUNC)_fort_R_fn_ipH_try);
@@ -1335,6 +1372,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fort_log_prior_pdf_ipn3", (DL_FUNC) &_fort_log_prior_pdf_ipn3, 1},
     {"_fort_log_prior_pdf_ipn4", (DL_FUNC) &_fort_log_prior_pdf_ipn4, 1},
     {"_fort_create_xptrs_ip_all", (DL_FUNC) &_fort_create_xptrs_ip_all, 0},
+    {"_fort_logsumexp", (DL_FUNC) &_fort_logsumexp, 2},
     {"_fort_a1_fn_ipH", (DL_FUNC) &_fort_a1_fn_ipH, 2},
     {"_fort_P1_fn_ipH", (DL_FUNC) &_fort_P1_fn_ipH, 2},
     {"_fort_R_fn_ipH", (DL_FUNC) &_fort_R_fn_ipH, 5},

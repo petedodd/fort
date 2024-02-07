@@ -73,6 +73,10 @@ create_xptrs_ip_all <- function() {
     .Call(`_fort_create_xptrs_ip_all`)
 }
 
+logsumexp <- function(logA, logB) {
+    .Call(`_fort_logsumexp`, logA, logB)
+}
+
 a1_fn_ipH <- function(theta, known_params) {
     .Call(`_fort_a1_fn_ipH`, theta, known_params)
 }

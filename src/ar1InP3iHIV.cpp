@@ -10,6 +10,18 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::interfaces(r, cpp)]]
 
+
+
+// [[Rcpp::export]]
+double logsumexp(double logA, double logB){
+  if(logA > logB){
+    return logA + std::log1p(exp(logB-logA));
+  } else{
+    return logB + std::log1p(exp(logA-logB));
+  }
+}
+
+
 // Unknown parameters theta:
 
 
@@ -256,15 +268,6 @@ arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha,
 
 
   return Tg;
-}
-
-
-double logsumexp(double logA, double logB){
-  if(logA > logB){
-    return logA + std::log1p(exp(logB-logA));
-  } else{
-    return logB + std::log1p(exp(logA-logB));
-  }
 }
 
 

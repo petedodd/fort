@@ -403,6 +403,27 @@ namespace fort {
         return Rcpp::as<Rcpp::List >(rcpp_result_gen);
     }
 
+    inline double logsumexp(double logA, double logB) {
+        typedef SEXP(*Ptr_logsumexp)(SEXP,SEXP);
+        static Ptr_logsumexp p_logsumexp = NULL;
+        if (p_logsumexp == NULL) {
+            validateSignature("double(*logsumexp)(double,double)");
+            p_logsumexp = (Ptr_logsumexp)R_GetCCallable("fort", "_fort_logsumexp");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_logsumexp(Shield<SEXP>(Rcpp::wrap(logA)), Shield<SEXP>(Rcpp::wrap(logB)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<double >(rcpp_result_gen);
+    }
+
     inline arma::vec a1_fn_ipH(const arma::vec& theta, const arma::vec& known_params) {
         typedef SEXP(*Ptr_a1_fn_ipH)(SEXP,SEXP);
         static Ptr_a1_fn_ipH p_a1_fn_ipH = NULL;
