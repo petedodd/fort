@@ -107,16 +107,16 @@ arma::vec T_fn_ipH(const unsigned int t, const arma::vec& alpha,
   double psi = 1.0 / (1.0 + exp(-alpha(6))); // expit
   double OM = omega + delta;
   double rho = ( 1-exp(-OM))/OM; // useful
-  double Q = (1-rho) * In / OM + rho * P; // cumulative P for use in D & N
-  double pr = 1.0 / (1.0 + exp(-theta(4)));
-  // PLHIV
-  double Pp = exp(alpha(7));
-  double omegap = exp(alpha(8));
   double irr = exp(alpha(9));
   double h = known_tv_params(t,5);  // NOTE 5 is HIV prevalence
   double H = irr * h / (1-h+irr*h); // NOTE see NOTE on odds
   double In = I * H;
   double Ip = I * (1-H);
+  double Q = (1-rho) * In / OM + rho * P; // cumulative P for use in D & N
+  double pr = 1.0 / (1.0 + exp(-theta(4)));
+  // PLHIV
+  double Pp = exp(alpha(7));
+  double omegap = exp(alpha(8));
   double deltap = omegap * delta / omega; // see NOTE above; enforces same CDR in HIV+
   double OMp = omegap + deltap;
   double rhop = ( 1-exp(-OMp))/OMp; // useful
@@ -162,36 +162,31 @@ arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha,
   double omega = exp(alpha(4));
   double delta = exp(alpha(5) + known_tv_params(t,5)); // NOTE interventions
   double psi = 1.0 / (1.0 + exp(-alpha(6))); // expit
-  // P = I (1-exp(-O))/O + P exp(-O)
-  // dP/domega = dP/ddelta = -P exp(-O) + I (exp(-O)-(1-exp(-O))/O^2)
-  double OM = omega + delta;
-  double rho = ( 1-exp(-OM))/OM; // useful
-  double drdd = exp(-OM)/OM - ( 1-exp(-OM))/(OM*OM); // drho/ddelta
-  double Q = (1-rho) * In / OM + rho * P; // cumulative P for use in D & N
-  double dQdo = ((P-In/OM)*drdd-(1-rho)*In/(OM*OM));
-  double dPt1do = -P * exp(-OM) + In * drdd;
-  double Pt1 = In * ( 1-exp(-OM))/OM + P * exp(-OM); // P_{t+1} see above
-  double Nt1 = delta * Q + deltap * Qp;
-  double Dt1 = psi * omega * Q + omegap + Qp;
-  double pr = 1.0 / (1.0 + exp(-theta(4)));
-  // PLHIV
   double Pp = exp(alpha(7));
   double omegap = exp(alpha(8));
   double irr = exp(alpha(9));
   double h = known_tv_params(t,5);  // NOTE 5 is HIV prevalence
   double H = irr * h / (1-h+irr*h); // NOTE see NOTE on odds
+  double deltap = omegap * delta / omega; // see NOTE above; enforces same CDR in HIV+
+  double OMp = omegap + deltap;
+  double OM = omega + delta;
+  double rho = ( 1-exp(-OM))/OM; // useful
+  double rhop = ( 1-exp(-OMp))/OMp; // useful
+  double drdd = exp(-OM)/OM - ( 1-exp(-OM))/(OM*OM); // drho/ddelta
+  double pr = 1.0 / (1.0 + exp(-theta(4)));
   double dHdJ = (1-h) * h / ((1-h+irr*h)*(1-h+irr*h)); // dH/dIRR
   double In = I * H;
   double Ip = I * (1-H);
-  double Ppt1 = Ip * ( 1-exp(-OMp))/OMp + Pp * exp(-OMp); // P^+_{t+1} see above
-  double deltap = omegap * delta / omega; // see NOTE above; enforces same CDR in HIV+
-  double OMp = omegap + deltap;
-  double rhop = ( 1-exp(-OMp))/OMp; // useful
+  double Q = (1-rho) * In / OM + rho * P; // cumulative P for use in D & N
   double Qp = (1-rhop) * Ip / OMp + rhop * Pp; // cumulative P for use in D & N
-  // double dQpdo = ((Pp-Ip/OMp)*drpdo*dopdo-(1-rhop)*Ip/(OMp*OMp));
-  double dQpdOp = ((Pp-Ip/OMp)*drpdOp-(1-rhop)*Ip/(OMp*OMp)); // dQp/dOmegap
+  double dQdo = ((P-In/OM)*drdd-(1-rho)*In/(OM*OM));
+  double dPt1do = -P * exp(-OM) + In * drdd;
+  double Pt1 = In * ( 1-exp(-OM))/OM + P * exp(-OM); // P_{t+1} see above
+  double Nt1 = delta * Q + deltap * Qp;
+  double Dt1 = psi * omega * Q + omegap + Qp;
+  double Ppt1 = Ip * ( 1-exp(-OMp))/OMp + Pp * exp(-OMp); // P^+_{t+1} see above
   double drpdOp = exp(-OMp)/OMp - ( 1-exp(-OMp))/(OMp*OMp); // drhop/dOmegap
-  // double dopdo = - deltap / omega;    // dOMEGAp/domega [OMEGAp=omegap*(1+delt/om)]
+  double dQpdOp = ((Pp-Ip/OMp)*drpdOp-(1-rhop)*Ip/(OMp*OMp)); // dQp/dOmegap
   double dPpt1dOp = -Pp * exp(-OMp) + Ip * drpdOp; // dP^+_{t-1}/dOMEGAp
   // I,P,N,D,  omega,delta,psi, Pp,omegap, irr
   arma::mat Tg(10, 10, arma::fill::zeros);
@@ -213,13 +208,13 @@ arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha,
   //    dlogN/dlogomega
   Tg(2,4) = (delta * omega * dQdo  - deltap * Qp - deltap * deltap * dQpdOp)/ Nt1;
   //    dlogN/dlogdelta
-  Tg(2,5) = (Nt + delta*delta*dQdo + deltap*dQpdOp ) / Nt;
+  Tg(2,5) = (Nt1 + delta*delta*dQdo + deltap*dQpdOp ) / Nt1;
   //    dlogN/dlogPp
   Tg(2,7) = (deltap * rhop * Pp) / Nt1;
   //    dlogN/dlogomegap
   Tg(2,8) = (delta *  Qp + OMp * dQpdOp)/ Nt1;
   //    dlogN/dlogirr
-  Tg(2,9) = irr * deltap * (1-rhop) * I * dHdJ / (Nt * OMp);
+  Tg(2,9) = irr * deltap * (1-rhop) * I * dHdJ / (Nt1 * OMp);
 
   // log D: template=
   // (x/Dt1) * (Q * dompsidx + psi * omega * dQdo * dodx + Qp * ddpdx + deltap * dQpdOp * dOMpdx)
@@ -253,7 +248,7 @@ arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha,
   Tg(7,5) = dPpt1dOp * deltap / Ppt1;           // dPp/dOmegap * dOmegap/dldelta
   Tg(7,7) = exp(-OMp) *  Pp/ Ppt1;              // dlogP/dlogPp
   Tg(7,8) = dPpt1dOp * OMp / Ppt1;              // dlogP/dlog omegap
-  Tg(7,9) = I * rhop dHdJ/ Ppt1;              // dlogP/dlog IRR
+  Tg(7,9) = I * rhop * dHdJ/ Ppt1;              // dlogP/dlog IRR
   // log-omegap
   Tg(8,8) = 1.0;
   // log-irr

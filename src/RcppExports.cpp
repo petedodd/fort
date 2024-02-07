@@ -651,6 +651,223 @@ RcppExport SEXP _fort_create_xptrs_ip_all() {
     UNPROTECT(1);
     return rcpp_result_gen;
 }
+// a1_fn_ipH
+arma::vec a1_fn_ipH(const arma::vec& theta, const arma::vec& known_params);
+static SEXP _fort_a1_fn_ipH_try(SEXP thetaSEXP, SEXP known_paramsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type known_params(known_paramsSEXP);
+    rcpp_result_gen = Rcpp::wrap(a1_fn_ipH(theta, known_params));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_a1_fn_ipH(SEXP thetaSEXP, SEXP known_paramsSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_a1_fn_ipH_try(thetaSEXP, known_paramsSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// P1_fn_ipH
+arma::mat P1_fn_ipH(const arma::vec& theta, const arma::vec& known_params);
+static SEXP _fort_P1_fn_ipH_try(SEXP thetaSEXP, SEXP known_paramsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type known_params(known_paramsSEXP);
+    rcpp_result_gen = Rcpp::wrap(P1_fn_ipH(theta, known_params));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_P1_fn_ipH(SEXP thetaSEXP, SEXP known_paramsSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_P1_fn_ipH_try(thetaSEXP, known_paramsSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// R_fn_ipH
+arma::mat R_fn_ipH(const unsigned int t, const arma::vec& alpha, const arma::vec& theta, const arma::vec& known_params, const arma::mat& known_tv_params);
+static SEXP _fort_R_fn_ipH_try(SEXP tSEXP, SEXP alphaSEXP, SEXP thetaSEXP, SEXP known_paramsSEXP, SEXP known_tv_paramsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const unsigned int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type known_params(known_paramsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type known_tv_params(known_tv_paramsSEXP);
+    rcpp_result_gen = Rcpp::wrap(R_fn_ipH(t, alpha, theta, known_params, known_tv_params));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_R_fn_ipH(SEXP tSEXP, SEXP alphaSEXP, SEXP thetaSEXP, SEXP known_paramsSEXP, SEXP known_tv_paramsSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_R_fn_ipH_try(tSEXP, alphaSEXP, thetaSEXP, known_paramsSEXP, known_tv_paramsSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// T_fn_ipH
+arma::vec T_fn_ipH(const unsigned int t, const arma::vec& alpha, const arma::vec& theta, const arma::vec& known_params, const arma::mat& known_tv_params);
+static SEXP _fort_T_fn_ipH_try(SEXP tSEXP, SEXP alphaSEXP, SEXP thetaSEXP, SEXP known_paramsSEXP, SEXP known_tv_paramsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const unsigned int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type known_params(known_paramsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type known_tv_params(known_tv_paramsSEXP);
+    rcpp_result_gen = Rcpp::wrap(T_fn_ipH(t, alpha, theta, known_params, known_tv_params));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_T_fn_ipH(SEXP tSEXP, SEXP alphaSEXP, SEXP thetaSEXP, SEXP known_paramsSEXP, SEXP known_tv_paramsSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_T_fn_ipH_try(tSEXP, alphaSEXP, thetaSEXP, known_paramsSEXP, known_tv_paramsSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// T_gn_ipH
+arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha, const arma::vec& theta, const arma::vec& known_params, const arma::mat& known_tv_params);
+static SEXP _fort_T_gn_ipH_try(SEXP tSEXP, SEXP alphaSEXP, SEXP thetaSEXP, SEXP known_paramsSEXP, SEXP known_tv_paramsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< const unsigned int >::type t(tSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type known_params(known_paramsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type known_tv_params(known_tv_paramsSEXP);
+    rcpp_result_gen = Rcpp::wrap(T_gn_ipH(t, alpha, theta, known_params, known_tv_params));
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_T_gn_ipH(SEXP tSEXP, SEXP alphaSEXP, SEXP thetaSEXP, SEXP known_paramsSEXP, SEXP known_tv_paramsSEXP) {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_T_gn_ipH_try(tSEXP, alphaSEXP, thetaSEXP, known_paramsSEXP, known_tv_paramsSEXP));
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
+// create_xptrs_H_all
+Rcpp::List create_xptrs_H_all();
+static SEXP _fort_create_xptrs_H_all_try() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    rcpp_result_gen = Rcpp::wrap(create_xptrs_H_all());
+    return rcpp_result_gen;
+END_RCPP_RETURN_ERROR
+}
+RcppExport SEXP _fort_create_xptrs_H_all() {
+    SEXP rcpp_result_gen;
+    {
+        Rcpp::RNGScope rcpp_rngScope_gen;
+        rcpp_result_gen = PROTECT(_fort_create_xptrs_H_all_try());
+    }
+    Rboolean rcpp_isInterrupt_gen = Rf_inherits(rcpp_result_gen, "interrupted-error");
+    if (rcpp_isInterrupt_gen) {
+        UNPROTECT(1);
+        Rf_onintr();
+    }
+    bool rcpp_isLongjump_gen = Rcpp::internal::isLongjumpSentinel(rcpp_result_gen);
+    if (rcpp_isLongjump_gen) {
+        Rcpp::internal::resumeJump(rcpp_result_gen);
+    }
+    Rboolean rcpp_isError_gen = Rf_inherits(rcpp_result_gen, "try-error");
+    if (rcpp_isError_gen) {
+        SEXP rcpp_msgSEXP_gen = Rf_asChar(rcpp_result_gen);
+        UNPROTECT(1);
+        Rf_error(CHAR(rcpp_msgSEXP_gen));
+    }
+    UNPROTECT(1);
+    return rcpp_result_gen;
+}
 // a1_fn
 arma::vec a1_fn(const arma::vec& theta, const arma::vec& known_params);
 static SEXP _fort_a1_fn_try(SEXP thetaSEXP, SEXP known_paramsSEXP) {
@@ -1039,6 +1256,12 @@ static int _fort_RcppExport_validate(const char* sig) {
         signatures.insert("double(*log_prior_pdf_ipn3)(const arma::vec&)");
         signatures.insert("double(*log_prior_pdf_ipn4)(const arma::vec&)");
         signatures.insert("Rcpp::List(*create_xptrs_ip_all)()");
+        signatures.insert("arma::vec(*a1_fn_ipH)(const arma::vec&,const arma::vec&)");
+        signatures.insert("arma::mat(*P1_fn_ipH)(const arma::vec&,const arma::vec&)");
+        signatures.insert("arma::mat(*R_fn_ipH)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
+        signatures.insert("arma::vec(*T_fn_ipH)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
+        signatures.insert("arma::mat(*T_gn_ipH)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
+        signatures.insert("Rcpp::List(*create_xptrs_H_all)()");
         signatures.insert("arma::vec(*a1_fn)(const arma::vec&,const arma::vec&)");
         signatures.insert("arma::mat(*P1_fn)(const arma::vec&,const arma::vec&)");
         signatures.insert("arma::mat(*H_fn)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
@@ -1073,6 +1296,12 @@ RcppExport SEXP _fort_RcppExport_registerCCallable() {
     R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn3", (DL_FUNC)_fort_log_prior_pdf_ipn3_try);
     R_RegisterCCallable("fort", "_fort_log_prior_pdf_ipn4", (DL_FUNC)_fort_log_prior_pdf_ipn4_try);
     R_RegisterCCallable("fort", "_fort_create_xptrs_ip_all", (DL_FUNC)_fort_create_xptrs_ip_all_try);
+    R_RegisterCCallable("fort", "_fort_a1_fn_ipH", (DL_FUNC)_fort_a1_fn_ipH_try);
+    R_RegisterCCallable("fort", "_fort_P1_fn_ipH", (DL_FUNC)_fort_P1_fn_ipH_try);
+    R_RegisterCCallable("fort", "_fort_R_fn_ipH", (DL_FUNC)_fort_R_fn_ipH_try);
+    R_RegisterCCallable("fort", "_fort_T_fn_ipH", (DL_FUNC)_fort_T_fn_ipH_try);
+    R_RegisterCCallable("fort", "_fort_T_gn_ipH", (DL_FUNC)_fort_T_gn_ipH_try);
+    R_RegisterCCallable("fort", "_fort_create_xptrs_H_all", (DL_FUNC)_fort_create_xptrs_H_all_try);
     R_RegisterCCallable("fort", "_fort_a1_fn", (DL_FUNC)_fort_a1_fn_try);
     R_RegisterCCallable("fort", "_fort_P1_fn", (DL_FUNC)_fort_P1_fn_try);
     R_RegisterCCallable("fort", "_fort_H_fn", (DL_FUNC)_fort_H_fn_try);
@@ -1106,6 +1335,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fort_log_prior_pdf_ipn3", (DL_FUNC) &_fort_log_prior_pdf_ipn3, 1},
     {"_fort_log_prior_pdf_ipn4", (DL_FUNC) &_fort_log_prior_pdf_ipn4, 1},
     {"_fort_create_xptrs_ip_all", (DL_FUNC) &_fort_create_xptrs_ip_all, 0},
+    {"_fort_a1_fn_ipH", (DL_FUNC) &_fort_a1_fn_ipH, 2},
+    {"_fort_P1_fn_ipH", (DL_FUNC) &_fort_P1_fn_ipH, 2},
+    {"_fort_R_fn_ipH", (DL_FUNC) &_fort_R_fn_ipH, 5},
+    {"_fort_T_fn_ipH", (DL_FUNC) &_fort_T_fn_ipH, 5},
+    {"_fort_T_gn_ipH", (DL_FUNC) &_fort_T_gn_ipH, 5},
+    {"_fort_create_xptrs_H_all", (DL_FUNC) &_fort_create_xptrs_H_all, 0},
     {"_fort_a1_fn", (DL_FUNC) &_fort_a1_fn, 2},
     {"_fort_P1_fn", (DL_FUNC) &_fort_P1_fn, 2},
     {"_fort_H_fn", (DL_FUNC) &_fort_H_fn, 5},

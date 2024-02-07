@@ -73,6 +73,30 @@ create_xptrs_ip_all <- function() {
     .Call(`_fort_create_xptrs_ip_all`)
 }
 
+a1_fn_ipH <- function(theta, known_params) {
+    .Call(`_fort_a1_fn_ipH`, theta, known_params)
+}
+
+P1_fn_ipH <- function(theta, known_params) {
+    .Call(`_fort_P1_fn_ipH`, theta, known_params)
+}
+
+R_fn_ipH <- function(t, alpha, theta, known_params, known_tv_params) {
+    .Call(`_fort_R_fn_ipH`, t, alpha, theta, known_params, known_tv_params)
+}
+
+T_fn_ipH <- function(t, alpha, theta, known_params, known_tv_params) {
+    .Call(`_fort_T_fn_ipH`, t, alpha, theta, known_params, known_tv_params)
+}
+
+T_gn_ipH <- function(t, alpha, theta, known_params, known_tv_params) {
+    .Call(`_fort_T_gn_ipH`, t, alpha, theta, known_params, known_tv_params)
+}
+
+create_xptrs_H_all <- function() {
+    .Call(`_fort_create_xptrs_H_all`)
+}
+
 a1_fn <- function(theta, known_params) {
     .Call(`_fort_a1_fn`, theta, known_params)
 }

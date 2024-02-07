@@ -902,10 +902,10 @@ HIVCprojections <- function(year,
   }
 
   ## model choice safety
-  if(! (modeltype=='rwI' | substr(modeltype,1,2)=='IP') ){
-    wrn <- paste0('modeltype = ',modeltype,' is unknown! Using rwI\n')
+  if(! (substr(modeltype,1,2)=='IP') ){
+    wrn <- paste0('modeltype = ',modeltype,' is unknown! Using IP0\n')
     warning(wrn)
-    modeltype <- 'rwI'
+    modeltype <- 'IP0'
   }
 
   ## processing data
@@ -1013,7 +1013,9 @@ HIVCprojections <- function(year,
   ## model pointers
   pntrsrw <- create_xptrs() #create pointers for rwI model
   pntrsip <- create_xptrs_ip_all() #create pointers for IP model
+  pntrsiph <- create_xptrs_H_all() #create pointers for IP-HIV model
 
+  ## TODO from here!
   if(verbose){
     cat('Testing pointers:\n')
     cat('rwI...\n')

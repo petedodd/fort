@@ -403,6 +403,132 @@ namespace fort {
         return Rcpp::as<Rcpp::List >(rcpp_result_gen);
     }
 
+    inline arma::vec a1_fn_ipH(const arma::vec& theta, const arma::vec& known_params) {
+        typedef SEXP(*Ptr_a1_fn_ipH)(SEXP,SEXP);
+        static Ptr_a1_fn_ipH p_a1_fn_ipH = NULL;
+        if (p_a1_fn_ipH == NULL) {
+            validateSignature("arma::vec(*a1_fn_ipH)(const arma::vec&,const arma::vec&)");
+            p_a1_fn_ipH = (Ptr_a1_fn_ipH)R_GetCCallable("fort", "_fort_a1_fn_ipH");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_a1_fn_ipH(Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(known_params)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<arma::vec >(rcpp_result_gen);
+    }
+
+    inline arma::mat P1_fn_ipH(const arma::vec& theta, const arma::vec& known_params) {
+        typedef SEXP(*Ptr_P1_fn_ipH)(SEXP,SEXP);
+        static Ptr_P1_fn_ipH p_P1_fn_ipH = NULL;
+        if (p_P1_fn_ipH == NULL) {
+            validateSignature("arma::mat(*P1_fn_ipH)(const arma::vec&,const arma::vec&)");
+            p_P1_fn_ipH = (Ptr_P1_fn_ipH)R_GetCCallable("fort", "_fort_P1_fn_ipH");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_P1_fn_ipH(Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(known_params)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<arma::mat >(rcpp_result_gen);
+    }
+
+    inline arma::mat R_fn_ipH(const unsigned int t, const arma::vec& alpha, const arma::vec& theta, const arma::vec& known_params, const arma::mat& known_tv_params) {
+        typedef SEXP(*Ptr_R_fn_ipH)(SEXP,SEXP,SEXP,SEXP,SEXP);
+        static Ptr_R_fn_ipH p_R_fn_ipH = NULL;
+        if (p_R_fn_ipH == NULL) {
+            validateSignature("arma::mat(*R_fn_ipH)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
+            p_R_fn_ipH = (Ptr_R_fn_ipH)R_GetCCallable("fort", "_fort_R_fn_ipH");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_R_fn_ipH(Shield<SEXP>(Rcpp::wrap(t)), Shield<SEXP>(Rcpp::wrap(alpha)), Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(known_params)), Shield<SEXP>(Rcpp::wrap(known_tv_params)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<arma::mat >(rcpp_result_gen);
+    }
+
+    inline arma::vec T_fn_ipH(const unsigned int t, const arma::vec& alpha, const arma::vec& theta, const arma::vec& known_params, const arma::mat& known_tv_params) {
+        typedef SEXP(*Ptr_T_fn_ipH)(SEXP,SEXP,SEXP,SEXP,SEXP);
+        static Ptr_T_fn_ipH p_T_fn_ipH = NULL;
+        if (p_T_fn_ipH == NULL) {
+            validateSignature("arma::vec(*T_fn_ipH)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
+            p_T_fn_ipH = (Ptr_T_fn_ipH)R_GetCCallable("fort", "_fort_T_fn_ipH");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_T_fn_ipH(Shield<SEXP>(Rcpp::wrap(t)), Shield<SEXP>(Rcpp::wrap(alpha)), Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(known_params)), Shield<SEXP>(Rcpp::wrap(known_tv_params)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<arma::vec >(rcpp_result_gen);
+    }
+
+    inline arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha, const arma::vec& theta, const arma::vec& known_params, const arma::mat& known_tv_params) {
+        typedef SEXP(*Ptr_T_gn_ipH)(SEXP,SEXP,SEXP,SEXP,SEXP);
+        static Ptr_T_gn_ipH p_T_gn_ipH = NULL;
+        if (p_T_gn_ipH == NULL) {
+            validateSignature("arma::mat(*T_gn_ipH)(const unsigned int,const arma::vec&,const arma::vec&,const arma::vec&,const arma::mat&)");
+            p_T_gn_ipH = (Ptr_T_gn_ipH)R_GetCCallable("fort", "_fort_T_gn_ipH");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_T_gn_ipH(Shield<SEXP>(Rcpp::wrap(t)), Shield<SEXP>(Rcpp::wrap(alpha)), Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(known_params)), Shield<SEXP>(Rcpp::wrap(known_tv_params)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<arma::mat >(rcpp_result_gen);
+    }
+
+    inline Rcpp::List create_xptrs_H_all() {
+        typedef SEXP(*Ptr_create_xptrs_H_all)();
+        static Ptr_create_xptrs_H_all p_create_xptrs_H_all = NULL;
+        if (p_create_xptrs_H_all == NULL) {
+            validateSignature("Rcpp::List(*create_xptrs_H_all)()");
+            p_create_xptrs_H_all = (Ptr_create_xptrs_H_all)R_GetCCallable("fort", "_fort_create_xptrs_H_all");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p_create_xptrs_H_all();
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<Rcpp::List >(rcpp_result_gen);
+    }
+
     inline arma::vec a1_fn(const arma::vec& theta, const arma::vec& known_params) {
         typedef SEXP(*Ptr_a1_fn)(SEXP,SEXP);
         static Ptr_a1_fn p_a1_fn = NULL;
