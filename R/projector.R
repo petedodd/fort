@@ -1000,8 +1000,9 @@ HIVCprojections <- function(year,
   future_known_tv_params[,5] <- logIRR
   future_known_tv_params[,6] <- logIRRdelta
 
-  SNMZ <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
-               'logomega','logdelta','psi')
+  SNMZH <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
+             'logomega','logdelta','psi',
+             'logPrevp','logomegap', 'logirr')
 
 
   ## tests:
@@ -1011,38 +1012,23 @@ HIVCprojections <- function(year,
   if(verbose) cat('Creating models...\n')
   ## --- create models
   ## model pointers
-  pntrsrw <- create_xptrs() #create pointers for rwI model
   pntrsip <- create_xptrs_ip_all() #create pointers for IP model
   pntrsiph <- create_xptrs_H_all() #create pointers for IP-HIV model
 
   ## TODO from here!
   if(verbose){
-    cat('Testing pointers:\n')
-    cat('rwI...\n')
-    (ta1 <- a1_fn(initial_theta,known_params))
-    print(c(ta1))
-    (tP1 <- P1_fn(initial_theta,known_params))
-    print(c(diag(tP1)))
-    tmp <- rep(0,7)
-    for(i in 1:7) tmp[i] <- exparz(ta1[i],sqrt(tP1[i]))$mn
-    print(tmp)
-    (tH <- H_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tR <- R_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tZ <- Z_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tdZ <- Z_gn(1,state,initial_theta,known_params,known_tv_params))
-    (tT <- T_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tdT <- T_gn(1,state,initial_theta,known_params,known_tv_params))
-    (log_prior_pdf(initial_theta))
-    cat('IP...\n')
+    cat('Testing HIV pointers:\n')
+    cat('IP & HIV...\n')
     print(names(pntrsip))
-    (ta1 <- a1_fn_ip(initial_theta_ip,known_params))
-    (tP1 <- P1_fn_ip(initial_theta_ip,known_params))
+    print(names(pntrsiph))
+    (ta1 <- a1_fn_ipH(initial_theta_ip,known_params))
+    (tP1 <- P1_fn_ipH(initial_theta_ip,known_params))
     (tH <- H_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tR <- R_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tR <- R_fn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
     (tZ <- Z_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
     (tdZ <- Z_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tT <- T_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tdT <- T_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tT <- T_fn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tdT <- T_gn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
     cat('--- IP prior variants ---\n')
     print(log_prior_pdf_ip4(initial_theta_ip))
     print(log_prior_pdf_ip3(initial_theta_ip))
@@ -1056,19 +1042,13 @@ HIVCprojections <- function(year,
     cat('...done.\n')
   }
 
-  ## rwI
-  modelrwi <- bssm::ssm_nlg(y = Yhat,
-                            a1=pntrsrw$a1_fn, P1 = pntrsrw$P1_fn,
-                            Z = pntrsrw$Z_fn, H = pntrsrw$H_fn, T = pntrsrw$T_fn, R = pntrsrw$R_fn,
-                            Z_gn = pntrsrw$Z_gn, T_gn = pntrsrw$T_gn,
-                            theta = initial_theta, log_prior_pdf = pntrsrw$log_prior_pdf,
-                            known_params = known_params, known_tv_params = known_tv_params,
-                            n_states = 7, n_etas = 4,
-                            state_names = SNMZ)
-
+  ## comparing exports
+  ## exported IP but not H:
+  ## a new H_fn_ip is not needed as we have the same observation model NOTE
+  ## similarly Z and Z'
 
   ## IP
-  logIPprior <- pntrsip$log_prior_pdf_ip0 #safety for rwI
+  logIPprior <- pntrsip$log_prior_pdf_ip1 #safety for rwI
   if(modeltype=='IP1'){
     logIPprior <- pntrsip$log_prior_pdf_ip1
   } else if(modeltype=='IP2'){
@@ -1089,25 +1069,20 @@ HIVCprojections <- function(year,
     logIPprior <- pntrsip$log_prior_pdf_ip0
   }
 
-  modelip <- bssm::ssm_nlg(y = Yhat,
-                           a1=pntrsip$a1_fn_ip, P1 = pntrsip$P1_fn_ip, #NOTE
+  modeliph <- bssm::ssm_nlg(y = Yhat,
+                           a1=pntrsiph$a1_fn_ipH, P1 = pntrsiph$P1_fn_ipH, #NOTE
                            Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
-                           T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
-                           Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
+                           T = pntrsiph$T_fn_ipH, R = pntrsiph$R_fn_ipH,
+                           Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsiph$T_gn_ipH,
                            theta = initial_theta_ip, log_prior_pdf = logIPprior,
-                           known_params = known_params, known_tv_params = known_tv_params,
-                           n_states = 7, n_etas = 4,
-                           state_names = SNMZ)
+                           known_params = known_params,
+                           known_tv_params = known_tv_paramsh, #TODO
+                           n_states = 10, n_etas = 4,
+                           state_names = SNMZH)
 
   ## choose model to use
-
-  if(modeltype=='rwI'){
-    cat('Using model type: ', modeltype,'\n')
-    model <- modelrwi
-  } else if(substr(modeltype,1,2)=='IP'){
-    cat('Using model type: ', modeltype,'\n')
-    model <- modelip
-  }
+  cat('Using model type: ', modeltype,'\n')
+  model <- modeliph
 
   if(verbose) cat('Using return type: ',returntype,'\n')
   if(verbose) cat('Starting inference...\n')
