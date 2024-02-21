@@ -566,17 +566,17 @@ Cprojections <- function(year,
       if(verbose) cat('...** overriding initial_theta_ip **...\n')
     }
   }
-  known_params <- c(mI0 = (IS['mI0']),
-                    mP0 = (IS['mP0']),
-                    mN0 = (IS['mN0']),
+  known_params <- c(mI0 = unname(IS['mI0']),
+                    mP0 = unname(IS['mP0']),
+                    mN0 = unname(IS['mN0']),
                     mD0 = (IS['mD0']),
                     momega = momega0,
                     mdelta = log(NoverI), #N/I as proxy for N/P
                     mpsi = mpsi0,## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
-                    sI0 = (IS['sI0']), #NOTE
-                    sP0 = (IS['sP0']),
-                    sN0 = (IS['sN0']),
-                    sD0 = (IS['sD0']),
+                    sI0 = unname(IS['sI0']), #NOTE
+                    sP0 = unname(IS['sP0']),
+                    sN0 = unname(IS['sN0']),
+                    sD0 = unname(IS['sD0']),
                     somega = somega0,
                     sdelta = sdelta0,
                     spsi = spsi0)
@@ -797,8 +797,12 @@ Cprojections <- function(year,
 ##' @param sEM Untreated Deaths uncertainty as SD (NOTE not used by default)
 ##' @param Phat Prevalence midpoints (NA if projection/imputation needed)
 ##' @param sEP Prevalence uncertainty as SD (NOTE not used by default)
-##' @param logIRRdelta Log-hazard ratios to apply to detection hazard (assumed 1 if not given)
+##' @param H HIV prevalence over time (fixed)
+##' @param HlogIRR log IRR for TB given HIV (observed mid point)
+##' @param HslogIRR log IRR for TB given HIV (uncertainty)
 ##' @param logIRR Log-hazard ratios to apply to incidence (assumed 1 if not given)
+##' @param logIRRdelta Log-hazard ratios to apply to detection hazard (assumed 1 if not given)
+##' @param HlogHR  Log-hazard ratios to apply to HIV IRR (assumed 1 if not given)
 ##' @param ... Additional parameters to help tune away from defaults. Read the code if you want to use.
 ##' @param returntype Determines what is returned if projecting
 ##' * projection (default): returns inputs during data combined with projections after
@@ -858,7 +862,7 @@ Cprojections <- function(year,
 ##'
 ##' ## running the SSM projection
 ##' \dontrun{
-##' ansC <- Cprojections(tmp$year[didx],
+##' ansC <- HIVCprojections(tmp$year[didx],
 ##'                      tmp$Ihat[didx],tmp$sEI[didx],
 ##'                      tmp$Nhat[didx],tmp$sEN[didx],
 ##'                      tmp$Mhat[didx],tmp$sEM[didx],
@@ -876,7 +880,9 @@ HIVCprojections <- function(year,
                         Nhat,sEN,
                         Mhat,sEM,
                         Phat,sEP,
+                        H,HlogIRR,HslogIRR,
                         logIRR,logIRRdelta,
+                        HlogHR,
                         ...,
                         nahead=0,
                         returntype='projection',
@@ -909,7 +915,7 @@ HIVCprojections <- function(year,
   }
 
   ## processing data
-  Yhat <- cbind(Ihat,Phat,Nhat,Mhat)
+  Yhat <- cbind(Ihat,Phat,Nhat,Mhat,HlogIRR)
   NoverI <- Nhat[1]/Ihat[1]
 
   ## transformations NOTE reconsider
@@ -917,11 +923,13 @@ HIVCprojections <- function(year,
   Vhat <- cbind( rep(1/10,nrow(Yhat)), #I
                 rep(1/3,nrow(Yhat)),  #P
                 rep(1/10,nrow(Yhat)),  #N
-                rep(1/10,nrow(Yhat)) ) #D
+                rep(1/10,nrow(Yhat)), #D
+                rep(1/10,nrow(Yhat))  #HlogIRR
+                )
   if('override' %in% names(arguments)){
     if('Vhat' %in% names(override)){
       if(override[['Vhat']]=='literal'){
-        Vhat <- cbind(sEI,sEP,sEN,sEM) #NOTE these are in logspace
+        Vhat <- cbind(sEI,sEP,sEN,sEM,HslogIRR) #NOTE these are in logspace
         if(verbose) cat('...** overriding Vhat **...\n')
       }
     }
@@ -940,16 +948,27 @@ HIVCprojections <- function(year,
   if(verbose) cat('...initial state: IS = \n')
   if(verbose) print(IS)
 
-  ## other prior parameters
+    ## other prior parameters
   sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
   momega0 <- -1.1
   mpsi0 <- logit(0.75)## mortality lit
   somega0 <- 0.7
   spsi0 <- 0.3
 
+  ## HIV initial parameters
+  ISH <- c(log(Phat[1]/3),
+           0, #TODO literature
+           log(5),
+           c(0.1,
+             0.1, #TODO literature
+             0.1))
+  names(ISH) <- c("mPP","momegaP0","mlogIRR","sPP","somegaP0","slogIRR")
+  if(verbose) cat('...initial state: ISH = \n')
+  if(verbose) print(ISH)
+
   ## initial thetas
   initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1) #default rwI
-  initial_theta <- c(initial_theta,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS jj
+  initial_theta <- c(initial_theta,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS
   if('override' %in% names(arguments)){
     if('initial_theta' %in% names(override)){
       initial_theta <- override[['initial_theta']]
@@ -957,27 +976,39 @@ HIVCprojections <- function(year,
     }
   }
   initial_theta_ip <- c(logSI = -1,logsdelta=-1,logsomega=-1,logphiP=-1,logitpr=-1) #IP
-  initial_theta_ip<- c(initial_theta_ip,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS jj
+  initial_theta_ip<- c(initial_theta_ip,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS
   if('override' %in% names(arguments)){
     if('initial_theta_ip' %in% names(override)){
       initial_theta_ip <- override[['initial_theta_ip']]
       if(verbose) cat('...** overriding initial_theta_ip **...\n')
     }
   }
-  known_params <- c(mI0 = (IS['mI0']),
-                    mP0 = (IS['mP0']),
-                    mN0 = (IS['mN0']),
-                    mD0 = (IS['mD0']),
-                    momega = momega0,
-                    mdelta = log(NoverI), #N/I as proxy for N/P
-                    mpsi = mpsi0,## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
-                    sI0 = (IS['sI0']), #NOTE
-                    sP0 = (IS['sP0']),
-                    sN0 = (IS['sN0']),
-                    sD0 = (IS['sD0']),
-                    somega = somega0,
-                    sdelta = sdelta0,
-                    spsi = spsi0)
+  known_params <- c(
+    ## non HIV mids
+    mI0 = unname(IS['mI0']),
+    mP0 = unname(IS['mP0']),
+    mN0 = unname(IS['mN0']),
+    mD0 = unname(IS['mD0']),
+    momega = momega0,
+    mdelta = log(NoverI), #N/I as proxy for N/P
+    mpsi = mpsi0,## end non-HIV mids 0-6
+    ## HIV extras mids 7-9
+    mPP = unname(ISH['mPP']),
+    momegaP0 = unname(ISH['momegaP0']),
+    mlogIRR = unname(ISH['mlogIRR']), #end HIV extras 7-9
+    ## non-HIV SDs orig 7-13, now 10-16
+    sI0 = unname(IS['sI0']), #NOTE
+    sP0 = unname(IS['sP0']),
+    sN0 = unname(IS['sN0']),
+    sD0 = unname(IS['sD0']),
+    somega = somega0,
+    sdelta = sdelta0,
+    spsi = spsi0, #end non-HIV SDs 10-16
+    ## HIV SDs 17-19
+    sPP = unname(ISH['sPP']),
+    somegaP0 = unname(ISH['somegaP0']),
+    slogIRR = unname(ISH['slogIRR']) #end HIV extras 7-9
+  )
   if('override' %in% names(arguments)){
     if('nathist' %in% names(override)){
       for(nm in names(override[['nathist']])){ #loop over these
@@ -987,18 +1018,36 @@ HIVCprojections <- function(year,
       }
     }
   }
-  known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
+
+  known_tv_params <- cbind(Vhat,                            #0:4 obs var
+                           matrix(0,nrow=nrow(Vhat),ncol=4) #intervention effects 5:7 + HIV (8)
+                           )
+
+  ## check HIV lengths & complete if needed
+  if(length(H)< nrow(Yhat) + nahead){
+    cat('Note that length(H) = ',length(H), ' is less than the desired projection length!\n')
+    cat(nrow(Yhat) + nahead,'\n')
+    cat('Using last-one-carried-forward!\n')
+    H <- c(H,rep(H[length(H)],nrow(Yhat)+nahead-length(H)))
+  }
+
 
   ## for predictions
   if(missing(logIRR)) logIRR <- rep(0,nahead)
   if(missing(logIRRdelta)) logIRRdelta <- rep(0,nahead)
+  if(missing(HlogHR)) HlogHR <- rep(0,nahead)
+
 
   future_known_tv_params <- known_tv_params[rep(nrow(Vhat),nahead),]
   if(verbose) cat('logIRR = ',logIRR,'\n')
   if(verbose) cat('logIRRdelta = ',logIRRdelta,'\n')
   ## NOTE interventions
-  future_known_tv_params[,5] <- logIRR
-  future_known_tv_params[,6] <- logIRRdelta
+  nc <- ncol(future_known_tv_params)
+  future_known_tv_params[,nc-3] <- logIRR
+  future_known_tv_params[,nc-2] <- logIRRdelta
+  future_known_tv_params[,nc-1] <- HlogHR
+  future_known_tv_params[,nc] <- H[(1+nrow(known_tv_params)):length(H)] #HIV prevalence (fixed)
+  known_tv_params[1:nrow(known_tv_params),nc] <- H[1:nrow(known_tv_params)] #HIV prevalence (fixed)
 
   SNMZH <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
              'logomega','logdelta','psi',
@@ -1007,7 +1056,8 @@ HIVCprojections <- function(year,
 
   ## tests:
   state <- c(log(100), log(100), log(100), log(10),
-             log(3),log(1),logit(0.5))
+             log(3),log(1),logit(0.5),
+             log(30),log(10),log(10))
 
   if(verbose) cat('Creating models...\n')
   ## --- create models
@@ -1015,7 +1065,6 @@ HIVCprojections <- function(year,
   pntrsip <- create_xptrs_ip_all() #create pointers for IP model
   pntrsiph <- create_xptrs_H_all() #create pointers for IP-HIV model
 
-  ## TODO from here!
   if(verbose){
     cat('Testing HIV pointers:\n')
     cat('IP & HIV...\n')
@@ -1023,13 +1072,15 @@ HIVCprojections <- function(year,
     print(names(pntrsiph))
     (ta1 <- a1_fn_ipH(initial_theta_ip,known_params))
     (tP1 <- P1_fn_ipH(initial_theta_ip,known_params))
-    (tH <- H_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tH <- H_fn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
     (tR <- R_fn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tZ <- Z_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tdZ <- Z_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
+    (tZ <- Z_fn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
+    print(tZ)
+    (tdZ <- Z_gn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
+    print(tdZ)
     (tT <- T_fn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
     (tdT <- T_gn_ipH(1,state,initial_theta_ip,known_params,known_tv_params))
-    cat('--- IP prior variants ---\n')
+    cat('--- IP prior variants ---\n') #NOTE from non-HIV version
     print(log_prior_pdf_ip4(initial_theta_ip))
     print(log_prior_pdf_ip3(initial_theta_ip))
     print(log_prior_pdf_ip2(initial_theta_ip))
@@ -1041,11 +1092,6 @@ HIVCprojections <- function(year,
     print(log_prior_pdf_ipn1(initial_theta_ip))
     cat('...done.\n')
   }
-
-  ## comparing exports
-  ## exported IP but not H:
-  ## a new H_fn_ip is not needed as we have the same observation model NOTE
-  ## similarly Z and Z'
 
   ## IP
   logIPprior <- pntrsip$log_prior_pdf_ip1 #safety for rwI
@@ -1071,13 +1117,13 @@ HIVCprojections <- function(year,
 
   modeliph <- bssm::ssm_nlg(y = Yhat,
                            a1=pntrsiph$a1_fn_ipH, P1 = pntrsiph$P1_fn_ipH, #NOTE
-                           Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
+                           Z = pntrsiph$Z_fn_ipH, H = pntrsiph$H_fn_ipH,
                            T = pntrsiph$T_fn_ipH, R = pntrsiph$R_fn_ipH,
-                           Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsiph$T_gn_ipH,
+                           Z_gn = pntrsiph$Z_gn_ipH, T_gn = pntrsiph$T_gn_ipH,
                            theta = initial_theta_ip, log_prior_pdf = logIPprior,
                            known_params = known_params,
-                           known_tv_params = known_tv_paramsh, #TODO
-                           n_states = 10, n_etas = 4,
+                           known_tv_params = known_tv_params,
+                           n_states = 10, n_etas = 6,
                            state_names = SNMZH)
 
   ## choose model to use
@@ -1089,7 +1135,7 @@ HIVCprojections <- function(year,
 
   ## inference
   mcmc.type <- 'ekf'              #change inference type
-  ITER <- 6000 ; BURN <- 1000 
+  ITER <- 6000 ; BURN <- 1000
   mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
 
   if(verbose) cat('Postprocessing inference...\n')

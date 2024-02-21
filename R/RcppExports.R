@@ -85,6 +85,18 @@ P1_fn_ipH <- function(theta, known_params) {
     .Call(`_fort_P1_fn_ipH`, theta, known_params)
 }
 
+H_fn_ipH <- function(t, alpha, theta, known_params, known_tv_params) {
+    .Call(`_fort_H_fn_ipH`, t, alpha, theta, known_params, known_tv_params)
+}
+
+Z_fn_ipH <- function(t, alpha, theta, known_params, known_tv_params) {
+    .Call(`_fort_Z_fn_ipH`, t, alpha, theta, known_params, known_tv_params)
+}
+
+Z_gn_ipH <- function(t, alpha, theta, known_params, known_tv_params) {
+    .Call(`_fort_Z_gn_ipH`, t, alpha, theta, known_params, known_tv_params)
+}
+
 R_fn_ipH <- function(t, alpha, theta, known_params, known_tv_params) {
     .Call(`_fort_R_fn_ipH`, t, alpha, theta, known_params, known_tv_params)
 }
@@ -143,5 +155,5 @@ create_xptrs <- function() {
 
 # Register entry points for exported C++ functions
 methods::setLoadAction(function(ns) {
-    .Call('_fort_RcppExport_registerCCallable', PACKAGE = 'fort')
+    .Call(`_fort_RcppExport_registerCCallable`)
 })

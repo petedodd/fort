@@ -14,8 +14,12 @@ HIVCprojections(
   sEM,
   Phat,
   sEP,
+  H,
+  HlogIRR,
+  HslogIRR,
   logIRR,
   logIRRdelta,
+  HlogHR,
   ...,
   nahead = 0,
   returntype = "projection",
@@ -42,9 +46,17 @@ HIVCprojections(
 
 \item{sEP}{Prevalence uncertainty as SD (NOTE not used by default)}
 
+\item{H}{HIV prevalence over time (fixed)}
+
+\item{HlogIRR}{log IRR for TB given HIV (observed mid point)}
+
+\item{HslogIRR}{log IRR for TB given HIV (uncertainty)}
+
 \item{logIRR}{Log-hazard ratios to apply to incidence (assumed 1 if not given)}
 
 \item{logIRRdelta}{Log-hazard ratios to apply to detection hazard (assumed 1 if not given)}
+
+\item{HlogHR}{Log-hazard ratios to apply to HIV IRR (assumed 1 if not given)}
 
 \item{...}{Additional parameters to help tune away from defaults. Read the code if you want to use.}
 
@@ -122,7 +134,7 @@ tmp$Phat <- tmp$Ihat; tmp$sEP <- 2*tmp$sEI   #rough guess for P
 
 ## running the SSM projection
 \dontrun{
-ansC <- Cprojections(tmp$year[didx],
+ansC <- HIVCprojections(tmp$year[didx],
                      tmp$Ihat[didx],tmp$sEI[didx],
                      tmp$Nhat[didx],tmp$sEN[didx],
                      tmp$Mhat[didx],tmp$sEM[didx],

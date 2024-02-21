@@ -58,18 +58,66 @@ arma::vec a1_fn_ipH(const arma::vec& theta, const arma::vec& known_params) {
 // [[Rcpp::export]]
 arma::mat P1_fn_ipH(const arma::vec& theta, const arma::vec& known_params) {
   arma::mat P1(10, 10, arma::fill::zeros);
-  P1(0,0) = std::pow(known_params(7),2);
-  P1(1,1) = std::pow(known_params(8),2);
-  P1(2,2) = std::pow(known_params(9),2);
-  P1(3,3) = std::pow(known_params(10),2);
-  P1(4,4) = std::pow(known_params(11),2);
-  P1(5,5) = std::pow(known_params(12),2);
-  P1(6,6) = std::pow(known_params(13),2);
-  P1(7,7) = std::pow(known_params(14),2);
-  P1(8,8) = std::pow(known_params(15),2);
-  P1(9,9) = std::pow(known_params(16),2);
+  P1(0,0) = std::pow(known_params(10),2);
+  P1(1,1) = std::pow(known_params(11),2);
+  P1(2,2) = std::pow(known_params(12),2);
+  P1(3,3) = std::pow(known_params(13),2);
+  P1(4,4) = std::pow(known_params(14),2);
+  P1(5,5) = std::pow(known_params(15),2);
+  P1(6,6) = std::pow(known_params(16),2);
+  P1(7,7) = std::pow(known_params(17),2);
+  P1(8,8) = std::pow(known_params(18),2);
+  P1(9,9) = std::pow(known_params(19),2);
   return P1;
 }
+
+// Function for the observational level standard deviation
+// [[Rcpp::export]]
+arma::mat H_fn_ipH(const unsigned int t, const arma::vec& alpha, 
+                  const arma::vec& theta, const arma::vec& known_params, 
+                  const arma::mat& known_tv_params) {
+  arma::mat H(5,5);
+  H(0,0) = known_tv_params(t,0); // I
+  H(1,1) = known_tv_params(t,1); // P
+  H(2,2) = known_tv_params(t,2); // N
+  H(3,3) = known_tv_params(t,3); // D
+  H(4,4) = known_tv_params(t,4); // logIRR for HIV
+  return H;
+}
+
+
+
+// Z function
+// [[Rcpp::export]]
+arma::vec Z_fn_ipH(const unsigned int t, const arma::vec& alpha, 
+                  const arma::vec& theta, const arma::vec& known_params, 
+                  const arma::mat& known_tv_params) {
+  // I,P,N,D,  omega,delta,psi
+  arma::vec Z(5);
+  Z(0) = alpha(0);              // I
+  Z(1) = alpha(1);              // P
+  Z(2) = alpha(2);              // N
+  Z(3) = alpha(3);              // D
+  Z(4) = alpha(9);              // log IRR for HIV
+  return Z;
+}
+
+
+// Jacobian of Z function
+// [[Rcpp::export]]
+arma::mat Z_gn_ipH(const unsigned int t, const arma::vec& alpha, 
+                   const arma::vec& theta, const arma::vec& known_params, 
+                   const arma::mat& known_tv_params) {
+
+  arma::mat Z(5, 10, arma::fill::zeros);
+  Z(0,0) = 1.0;
+  Z(1,1) = 1.0;
+  Z(2,2) = 1.0;
+  Z(3,3) = 1.0;
+  Z(4,9) = 1.0;
+  return Z;
+}
+
 
 // NOTE chol
 // Function for the Cholesky of state level covariance
@@ -86,12 +134,12 @@ arma::mat R_fn_ipH(const unsigned int t, const arma::vec& alpha,
   double spsi = known_params(13);
   arma::mat R(10, 6, arma::fill::zeros);
   // I,P,N,D,  omega,delta,psi, Pp,omegap, irr
-  R(0, 0) = sI;                 // this is the unknown parm
-  R(4, 1) = somega;
-  R(5, 2) = sdelta;
-  R(6, 3) = spsi;
-  R(8, 4) = spsi;
-  R(9, 5) = spsi;
+  R(0, 0) = sI;                 // this is the unknown parm: I
+  R(4, 1) = somega;             // omega
+  R(5, 2) = sdelta;             // delta
+  R(6, 3) = spsi;               // psi
+  R(8, 4) = somega;             // omegap
+  R(9, 5) = somega;             // log HIV IRR
   // TODO consider extra parms
   return R;
 }
@@ -115,12 +163,12 @@ arma::vec T_fn_ipH(const unsigned int t, const arma::vec& alpha,
   double P = exp(alpha(1));     // now transformed
   double N = exp(alpha(2)); double D = exp(alpha(3)); // also transformed
   double omega = exp(alpha(4));
-  double delta = exp(alpha(5) + known_tv_params(t,5)); // NOTE interventions
+  double delta = exp(alpha(5) + known_tv_params(t,6)); // NOTE interventions
   double psi = 1.0 / (1.0 + exp(-alpha(6))); // expit
   double OM = omega + delta;
   double rho = ( 1-exp(-OM))/OM; // useful
-  double irr = exp(alpha(9));
-  double h = known_tv_params(t,5);  // NOTE 5 is HIV prevalence
+  double irr = exp(alpha(9) + known_tv_params(t,7)); //dynamical
+  double h = known_tv_params(t,8);  // NOTE 5 is HIV prevalence
   double H = irr * h / (1-h+irr*h); // NOTE see NOTE on odds
   double In = I * H;
   double Ip = I * (1-H);
@@ -137,8 +185,8 @@ arma::vec T_fn_ipH(const unsigned int t, const arma::vec& alpha,
   arma::vec alpha_new(10);
   // I_{t+1} = exp(θ_3) * (I_{t}^{1-p} * P_t^p);   p=ilogit( θ_4 );
   // NOTE just use HIV-ve prevalence
-  // alpha_new(0) = (1-pr) * alpha(0) + pr * logsumexp(alpha(1),alpha(7)) + theta(3) + known_tv_params(t,4); //
-  alpha_new(0) = (1-pr) * alpha(0) + pr * alpha(1) + theta(3) + known_tv_params(t,4); //
+  // alpha_new(0) = (1-pr) * alpha(0) + pr * logsumexp(alpha(1),alpha(7)) + theta(3) + known_tv_params(t,5); //
+  alpha_new(0) = (1-pr) * alpha(0) + pr * alpha(1) + theta(3) + known_tv_params(t,5); //
   // log P: inflow only HIV-ve TB incidence
   alpha_new(1) = log(In * rho + P * exp(-OM) );
   // log N
@@ -172,12 +220,12 @@ arma::mat T_gn_ipH(const unsigned int t, const arma::vec& alpha,
   double P = exp(alpha(1));
   double N = exp(alpha(2)); double D = exp(alpha(3));
   double omega = exp(alpha(4));
-  double delta = exp(alpha(5) + known_tv_params(t,5)); // NOTE interventions
+  double delta = exp(alpha(5) + known_tv_params(t,6)); // NOTE interventions
   double psi = 1.0 / (1.0 + exp(-alpha(6))); // expit
   double Pp = exp(alpha(7));
   double omegap = exp(alpha(8));
-  double irr = exp(alpha(9));
-  double h = known_tv_params(t,5);  // NOTE 5 is HIV prevalence
+  double irr = exp(alpha(9) + known_tv_params(t,7));
+  double h = known_tv_params(t,8);  // NOTE 5 is HIV prevalence
   double H = irr * h / (1-h+irr*h); // NOTE see NOTE on odds
   double deltap = omegap * delta / omega; // see NOTE above; enforces same CDR in HIV+
   double OMp = omegap + deltap;
@@ -292,8 +340,11 @@ Rcpp::List create_xptrs_H_all() {
   return Rcpp::List::create(
                             Rcpp::Named("a1_fn_ipH") = Rcpp::XPtr<a1_fnPtr>(new a1_fnPtr(&a1_fn_ipH)),
                             Rcpp::Named("P1_fn_ipH") = Rcpp::XPtr<P1_fnPtr>(new P1_fnPtr(&P1_fn_ipH)),
-                            Rcpp::Named("T_fn_ipH") = Rcpp::XPtr<nvec_fnPtr>(new nvec_fnPtr(&T_fn_ipH)),
+                            Rcpp::Named("H_fn_ipH") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&H_fn_ipH)),
+                            Rcpp::Named("Z_fn_ipH") = Rcpp::XPtr<nvec_fnPtr>(new nvec_fnPtr(&Z_fn_ipH)),
+                            Rcpp::Named("Z_gn_ipH") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&Z_gn_ipH)),
                             Rcpp::Named("R_fn_ipH") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&R_fn_ipH)),
+                            Rcpp::Named("T_fn_ipH") = Rcpp::XPtr<nvec_fnPtr>(new nvec_fnPtr(&T_fn_ipH)),
                             Rcpp::Named("T_gn_ipH") = Rcpp::XPtr<nmat_fnPtr>(new nmat_fnPtr(&T_gn_ipH)));
 }
 
