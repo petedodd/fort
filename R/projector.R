@@ -224,6 +224,10 @@ projections <- function(year,
     TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
     warning('Interpolating over NAs in TXf provided!')
   } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
+  ## duration assumptions for use below
+  ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
+  tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
+  tx.sd <- (2-0.2)/3.92; ut.sd <- (4-1)/3.92 #SD
   if(modeltype=='failsafe'){ #============== FAILSAFE MODEL ==============
     ## incidence
     suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
@@ -295,9 +299,6 @@ projections <- function(year,
     ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] # addon mortality on treatment
     ## NOTE no extra uncertainty in line above
     ## computing this using duration assumption -
-    ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
-    tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
-    tx.sd <- (2-0.2)/3.92; ut.sd <- (4-1)/3.92 #SD
     ANS[,P.mid:=N.mid*tx.mid + (I.mid-N.mid)*ut.mid]
     ## P.sd^2 = (N.mid*tx.m)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2) +
     ##     ((I.mid-N.mid)*ut.m)^2 * ( (ut.sd/ut.m)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
@@ -316,7 +317,11 @@ projections <- function(year,
     logIRRdelta <- log(HRd[(lastd+1):length(HRd)]) #detection
     if(all(is.na(Phat))){
       ## make guess for P
-      Phat <- Ihat; sEP <- 2*sEI
+      Phat <- Nhat * tx.mid + (Ihat-Nhat) * ut.mid
+      sEP <- (Nhat*tx.mid)^2 * ((sEN/Nhat)^2+(tx.sd/tx.mid)^2)+
+        ((Ihat-Nhat)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (sEI^2+sEN^2)/(Ihat-Nhat)^2 )
+      sEP <- sqrt(sEP)
+      ## Phat <- Ihat; sEP <- 2*sEI
       if(verbose) cat('No Phat supplied: making a guess from Ihat!\n')
     }
 
