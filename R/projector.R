@@ -756,18 +756,20 @@ Cprojections <- function(year,
   if(returntype=='projection'){
     cat('projection fit summary...\n')
     ## create same format input data
-    inputs.m <- data.table::data.table(Incidence=Ihat,Notifications=Nhat,
-                                       Deaths=Mhat,Prevalence=Phat,
+    inputs.m <- data.table::data.table(Incidence=as.numeric(Ihat),
+                                       Notifications=as.numeric(Nhat),
+                                       Deaths=as.numeric(Mhat),
+                                       Prevalence=as.numeric(Phat),
                                        time=1:length(year))
-    inputs.h <- data.table::data.table(Incidence=Ihat+1.96*sEI,
-                                       Notifications=Nhat+1.96*sEN,
-                                       Deaths=Mhat+1.96*sEM,
-                                       Prevalence=Phat+1.96*sEP,
+    inputs.h <- data.table::data.table(Incidence=as.numeric(Ihat+1.96*sEI),
+                                       Notifications=as.numeric(Nhat+1.96*sEN),
+                                       Deaths=as.numeric(Mhat+1.96*sEM),
+                                       Prevalence=as.numeric(Phat+1.96*sEP),
                                        time=1:length(year))
-    inputs.l <- data.table::data.table(Incidence=pmax(0,Ihat-1.96*sEI),
-                                       Notifications=pmax(0,Nhat-1.96*sEN),
-                                       Deaths=pmax(0,Mhat-1.96*sEM),
-                                       Prevalence=pmax(0,Phat-1.96*sEP),
+    inputs.l <- data.table::data.table(Incidence=as.numeric(pmax(0,Ihat-1.96*sEI)),
+                                       Notifications=as.numeric(pmax(0,Nhat-1.96*sEN)),
+                                       Deaths=as.numeric(pmax(0,Mhat-1.96*sEM)),
+                                       Prevalence=as.numeric(pmax(0,Phat-1.96*sEP)),
                                        time=1:length(year))
     inputs.m <- melt(inputs.m,id.vars = c('time'))
     names(inputs.m)[3] <- 'mid'
