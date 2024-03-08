@@ -115,5 +115,5 @@ create_xptrs <- function() {
 
 # Register entry points for exported C++ functions
 methods::setLoadAction(function(ns) {
-    .Call('_fort_RcppExport_registerCCallable', PACKAGE = 'fort')
+    .Call(`_fort_RcppExport_registerCCallable`)
 })

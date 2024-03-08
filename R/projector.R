@@ -296,7 +296,8 @@ projections <- function(year,
     ANS[pb:pe,c('M.lo','M.hi'):=list(pmax(0,M.mid-M.sdx3.92/2),M.mid+M.sdx3.92/2)]
     ANS[,M.sdx3.92:=NULL]
     ## add treated mortality back
-    ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid + TXf*N.mid,M.lo + TXf*N.mid,M.hi + TXf*N.mid)] # addon mortality on treatment
+    ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid + TXf*N.mid,
+                                        M.lo + TXf*N.mid,M.hi + TXf*N.mid)]
     ## NOTE no extra uncertainty in line above
     ## computing this using duration assumption -
     ANS[,P.mid:=N.mid*tx.mid + (I.mid-N.mid)*ut.mid]
@@ -318,6 +319,11 @@ projections <- function(year,
     if(all(is.na(Phat))){
       ## make guess for P
       Phat <- Nhat * tx.mid + (Ihat-Nhat) * ut.mid
+      ## ## smooth this:
+      ## tosmooth <- data.frame(index=1:length(Phat),Phat=Phat)
+      ## smoothmod <- loess(Phat ~ index, data=tosmooth, span = 0.5) #NOTE 0.5 can be varied
+      ## Phat <- predict(smoothmod) #use smoothed version
+      ## calculate uncertainty
       sEP <- (Nhat*tx.mid)^2 * ((sEN/Nhat)^2+(tx.sd/tx.mid)^2)+
         ((Ihat-Nhat)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (sEI^2+sEN^2)/(Ihat-Nhat)^2 )
       sEP <- sqrt(sEP)
@@ -370,7 +376,10 @@ projections <- function(year,
     ANS <- ANS[!is.na(year)] #removes 1 ahead if 'fit'
     ## creating SDs
     ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
-           list((I.hi-I.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92,(N.hi-N.lo)/3.92)]
+           list((I.hi-I.lo)/3.92,
+           (N.hi-N.lo)/3.92,
+           (M.hi-M.lo)/3.92,
+           (P.hi-P.lo)/3.92)] #NOTE were N TODO
     ## adding back on deaths off treatment
     ANS[,M.mid:=M.mid + TXf * N.mid]
     ANS[,M.sd:=sqrt(M.sd^2 + TXf^2 * N.sd^2)]
@@ -383,7 +392,8 @@ projections <- function(year,
                                  "M.mid", "M.sd",  "M.lo", "M.hi",
                                  "P.mid", "P.sd",  "P.lo", "P.hi" ))
   }
-  if(modeltype!='failsafe' & returninternalfit) warning("Note internal mortality excludes deaths on TB treatment!")
+  if(modeltype!='failsafe' & returninternalfit)
+    warning("Note internal mortality excludes deaths on TB treatment!")
   ## output
   ANS
 }
@@ -556,7 +566,7 @@ Cprojections <- function(year,
 
   ## initial thetas
   initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1) #default rwI
-  initial_theta <- c(initial_theta,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS jj
+  initial_theta <- c(initial_theta,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS 
   if('override' %in% names(arguments)){
     if('initial_theta' %in% names(override)){
       initial_theta <- override[['initial_theta']]
@@ -564,7 +574,7 @@ Cprojections <- function(year,
     }
   }
   initial_theta_ip <- c(logSI = -1,logsdelta=-1,logsomega=-1,logphiP=-1,logitpr=-1) #IP
-  initial_theta_ip<- c(initial_theta_ip,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS jj
+  initial_theta_ip<- c(initial_theta_ip,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS 
   if('override' %in% names(arguments)){
     if('initial_theta_ip' %in% names(override)){
       initial_theta_ip <- override[['initial_theta_ip']]
@@ -776,14 +786,34 @@ Cprojections <- function(year,
                                        Deaths=as.numeric(pmax(0,Mhat-1.96*sEM)),
                                        Prevalence=as.numeric(pmax(0,Phat-1.96*sEP)),
                                        time=1:length(year))
+    ## prefer outputting fit since use case will rarely have prevalence supplied
+    prev.data.missing <- TRUE ## replace Prevalence with estimates
+    if (prev.data.missing) {
+      if (verbose) cat("NOTE ignoring any prevalence data supplied!\n")
+      inputs.m$Prevalence[1:nrow(inputs.m)] <- outsf[
+        variable=='Prevalence' &
+        time<=nrow(inputs.m),
+        mid]
+      inputs.l$Prevalence[1:nrow(inputs.m)] <- outsf[
+        variable == "Prevalence" &
+          time <= nrow(inputs.m),
+        lo
+      ]
+      inputs.h$Prevalence[1:nrow(inputs.m)] <- outsf[
+        variable == "Prevalence" &
+          time <= nrow(inputs.m),
+        hi
+      ]
+    }
+
     inputs.m <- melt(inputs.m,id.vars = c('time'))
     names(inputs.m)[3] <- 'mid'
     inputs.l <- melt(inputs.l,id.vars = c('time'))
     names(inputs.l)[3] <- 'lo'
     inputs.h <- melt(inputs.h,id.vars = c('time'))
     names(inputs.h)[3] <- 'hi'
-    inputs.a <- merge(inputs.m,inputs.l,id=c('time'))
-    inputs.a <- merge(inputs.a,inputs.h,id=c('time'))
+    inputs.a <- merge(inputs.m,inputs.l,by=c('time','variable'))
+    inputs.a <- merge(inputs.a,inputs.h,by=c('time','variable'))
     ## ouput
     outs <- rbind(inputs.a,outs)
     return(outs)
