@@ -60,7 +60,7 @@ mcmcsmry <- function(fit){
   tmpo[,value:=exp(value)]
   tmpo[,variable:=gsub('log','',variable)]
   out <- rbind(out,tmpo)
-  out[,list(mid=mean(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
+  out[,list(mid=median(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
 }
 
 
