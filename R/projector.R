@@ -198,7 +198,7 @@ projections <- function(year,
                         ){
   ## argument management
   arguments <- list(...)
-  list2env(arguments,envir = environment())                   #boost ... to this scope
+  list2env(arguments, envir = environment()) # boost ... to this scope
   ## R CMD check safety
   I.sd <- I.mid <- N.mid <- I.lo <- I.hi <- N.lo <- N.hi <- M.mid <- M.sdx3.92 <- NULL
   M.lo <-  M.hi <- P.mid <- P.sd <- N.sd <- variable <- NULL
@@ -284,7 +284,10 @@ projections <- function(year,
     ANS1 <- merge(RI,RN,by='year')
     ANS2 <- merge(RM,RP,by='year')
     ANS <- merge(ANS1,ANS2,by='year')
-    if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)) ANS <- merge(ANS,RH,by='year')
+    if ("Hhat" %in% names(arguments) & "sEH" %in% names(arguments)) ANS <- merge(ANS, RH, by = "year")
+    ## safety to avoid new CDR>1
+    bad <- which(CDR * HRd > 1)
+    if (length(bad) > 1) HRd[bad] <- 1.0 / CDR # to give new CDR==1==max
     ## HR interventions NOTE the notif one will have limited validity
     ANS[,c('I.mid','I.lo','I.hi'):=list(I.mid*HRi,I.lo*HRi,I.hi*HRi)] #OK
     ANS[,c('N.mid','N.lo','N.hi'):=list(N.mid*HRi*HRd,N.lo*HRi*HRd,N.hi*HRi*HRd)] #approx
