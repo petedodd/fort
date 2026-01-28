@@ -13,37 +13,41 @@
 ##' @author Pete Dodd
 ##' @import data.table
 ##' @import imputeTS
-noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
+noisyex <- function(yrz, mnz, sdz, nrep, runs = TRUE, trnsfm = 0) {
   ## R CMD check safety
   value <- NULL
-  if(trnsfm==1){
-    tf <- lnparz(mnz,sdz)
+  if (trnsfm == 1) {
+    tf <- lnparz(mnz, sdz)
     mnz <- tf$mu
     sdz <- tf$sdlog
   }
-  if(trnsfm==2){
-    tf <- lgtparz(mnz,sdz)
+  if (trnsfm == 2) {
+    tf <- lgtparz(mnz, sdz)
     mnz <- tf$mu
     sdz <- tf$sdlog
   }
   ## add noise
-  Xreps <- matrix(mnz,nrow=length(mnz),ncol=nrep)
-  upto <- which(!is.na(Xreps[,1]))
-  for(i in 1:nrep) Xreps[upto,i] <- Xreps[upto,i] + rnorm(length(upto),sd=sdz[upto])
+  Xreps <- matrix(mnz, nrow = length(mnz), ncol = nrep)
+  upto <- which(!is.na(Xreps[, 1]))
+  for (i in 1:nrep) Xreps[upto, i] <- Xreps[upto, i] + rnorm(length(upto), sd = sdz[upto])
   ## imput
   imp <- imputeTS::na_kalman(Xreps)
-  if(trnsfm==1) imp <- exp(imp)
-  if(trnsfm==2) imp <- expit(imp)
+  if (trnsfm == 1) imp <- exp(imp)
+  if (trnsfm == 2) imp <- expit(imp)
   dimp <- data.table::as.data.table(imp)
   dimp$year <- yrz
-  dimp <- data.table::melt(dimp,id='year')
-  if(runs!=TRUE){
-    dimp <- dimp[,list(value=mean(value),s=sd(value),
-                    lo=lo(value),hi=hi(value)),
-                 by=year]
+  dimp <- data.table::melt(dimp, id = "year")
+  if (runs != TRUE) {
+    dimp <- dimp[, list(
+      value = mean(value), s = sd(value),
+      lo = lo(value), hi = hi(value)
+    ),
+    by = year
+    ]
   }
   dimp
 }
+
 ##' MCMC Summary Computer
 ##'
 ##' Computes mid (mean) and hi/lo (95% quantiles) by variable and time and also adds in exponentiated variables if their names begin with log.
@@ -53,15 +57,19 @@ noisyex <- function(yrz,mnz,sdz,nrep,runs=TRUE,trnsfm=0){
 ##' @import data.table
 ##' @import bssm
 ##' @author Pete Dodd
-mcmcsmry <- function(fit){
-  variable <- value <- time <- NULL #avoiding notes
-  out <- data.table::as.data.table(fit,variable='states')
-  tmpo <- out[grepl('log',variable)] #the logged
-  tmpo[,value:=exp(value)]
-  tmpo[,variable:=gsub('log','',variable)]
-  out <- rbind(out,tmpo)
-  out[,list(mid=median(value),lo=lo(value),hi=hi(value)),by=list(variable,time)]
+mcmcsmry <- function(fit) {
+  variable <- value <- time <- NULL # avoiding notes
+  out <- data.table::as.data.table(fit, variable = "states")
+  tmpo <- out[grepl("log", variable)] # the logged
+  tmpo[, value := exp(value)]
+  tmpo[, variable := gsub("log", "", variable)]
+  out <- rbind(out, tmpo)
+  out[,
+    list(mid = median(value), lo = lo(value), hi = hi(value)),
+    by = list(variable, time)
+  ]
 }
+
 
 
 ##' Main Projection Function
@@ -184,222 +192,292 @@ mcmcsmry <- function(fit){
 ##' @import data.table
 ##' @export
 projections <- function(year,
-                        Ihat,sEI,
-                        Nhat,sEN,
-                        Mhat,sEM,
-                        Phat,sEP,
-                        TXf,HRd,HRi,ORt,
+                        Ihat, sEI,
+                        Nhat, sEN,
+                        Mhat, sEM,
+                        Phat, sEP,
+                        TXf, HRd, HRi, ORt,
                         ...,
-                        nrep=500,
-                        output='projection',
-                        modeltype='failsafe',
-                        returninternalfit=FALSE,
-                        verbose=FALSE
+                        nrep = 500,
+                        output = "projection",
+                        modeltype = "failsafe",
+                        returninternalfit = FALSE,
+                        verbose = FALSE
                         ){
   ## argument management
   arguments <- list(...)
   list2env(arguments, envir = environment()) # boost ... to this scope
   ## R CMD check safety
   I.sd <- I.mid <- N.mid <- I.lo <- I.hi <- N.lo <- N.hi <- M.mid <- M.sdx3.92 <- NULL
-  M.lo <-  M.hi <- P.mid <- P.sd <- N.sd <- variable <- NULL
+  M.lo <- M.hi <- P.mid <- P.sd <- N.sd <- variable <- NULL
   ## completions
-  if(missing(HRd)) HRd <- rep(1,length(year))
-  if(missing(HRi)) HRi <- rep(1,length(year))
-  if(missing(ORt)) ORt <- rep(1,length(year))
-  if(missing(TXf)) TXf <- rep(0,length(year))
+  if (missing(HRd)) HRd <- rep(1, length(year))
+  if (missing(HRi)) HRi <- rep(1, length(year))
+  if (missing(ORt)) ORt <- rep(1, length(year))
+  if (missing(TXf)) TXf <- rep(0, length(year))
   ## project/interpolate if any NAs in provided time series
   if(any(is.na(HRd))){
     HRd <- exp( imputeTS::na_kalman(log(HRd)) )
-    warning('Interpolating over NAs in HRd provided!')
+    warning("Interpolating over NAs in HRd provided!")
   }
   if(any(is.na(HRi))){
     HRi <- exp( imputeTS::na_kalman(log(HRi)) )
-    warning('Interpolating over NAs in HRi provided!')
+    warning("Interpolating over NAs in HRi provided!")
   }
   if(any(is.na(ORt))){
     ORt <- exp( imputeTS::na_kalman(log(ORt)) )
-    warning('Interpolating over NAs in ORt provided!')
+    warning("Interpolating over NAs in ORt provided!")
   }
-  if(any(is.na(TXf))){
-    TXf <- expit( imputeTS::na_kalman(logit(TXf)) + log(ORt) )
-    warning('Interpolating over NAs in TXf provided!')
-  } else { TXf <- expit( logit(TXf) + log(ORt) );} #apply effect
+  if (any(is.na(TXf))) {
+    TXf <- expit(imputeTS::na_kalman(logit(TXf)) + log(ORt))
+    warning("Interpolating over NAs in TXf provided!")
+  } else {
+    TXf <- expit(logit(TXf) + log(ORt))
+  } # apply effect
+
   ## duration assumptions for use below
   ## WHO methods appendix: tx ~ U[0.2,2]; ut ~ U[1,4]
-  tx.mid <- (2+0.2)/2; ut.mid <- (4+1)/2 #midpoints
-  tx.sd <- (2-0.2)/3.92; ut.sd <- (4-1)/3.92 #SD
-  if(modeltype=='failsafe'){ #============== FAILSAFE MODEL ==============
+  tx.mid <- (2 + 0.2) / 2
+  ut.mid <- (4 + 1) / 2 # midpoints
+  tx.sd <- (2 - 0.2) / 3.92
+  ut.sd <- (4 - 1) / 3.92 # SD
+
+  if (modeltype == "failsafe") {
+
+    ## ============== FAILSAFE MODEL ==============
     ## incidence
-    suppressWarnings({RI <- noisyex(year,Ihat,sEI,nrep,runs=FALSE,1)})
-    names(RI) <- c('year','I.mid','I.sd','I.lo','I.hi')
+    suppressWarnings({
+      RI <- noisyex(year, Ihat, sEI, nrep, runs = FALSE, 1)
+    })
+
+    names(RI) <- c("year", "I.mid", "I.sd", "I.lo", "I.hi")
+
     ## notifications
-    suppressWarnings({RN <- noisyex(year,Nhat,sEN,nrep,runs=FALSE,1)})
-    names(RN) <- c('year','N.mid','N.sd','N.lo','N.hi')
+    suppressWarnings({
+      RN <- noisyex(year, Nhat, sEN, nrep, runs = FALSE, 1)
+    })
+
+    names(RN) <- c("year", "N.mid", "N.sd", "N.lo", "N.hi")
+
     ## mortality
-    suppressWarnings({RM <- noisyex(year,
-                                    Mhat-TXf*Nhat, #take off mortality on treatment (see below addon)
-                                    sEM,nrep,runs=FALSE,1)})
-    names(RM) <- c('year','M.mid','M.sd','M.lo','M.hi')
+    suppressWarnings({
+      RM <- noisyex(year,
+        Mhat - TXf * Nhat, # take off mortality on treatment (see below addon)
+        sEM, nrep,
+        runs = FALSE, 1
+      )
+    })
+
+    names(RM) <- c("year", "M.mid", "M.sd", "M.lo", "M.hi")
+
     ## calculate a version of the CFR to carry fwd
-    maxidxnotna <- sum(!is.na(Ihat + Nhat + Mhat)) #last index with all necessary data provided
-    cfrz <- (Mhat-TXf*Nhat) / (Ihat - Nhat) #(untreated mort'y)/(untreated inc)
+    maxidxnotna <- sum(!is.na(Ihat + Nhat + Mhat)) # last index with all necessary data provided
+    cfrz <- (Mhat - TXf * Nhat) / (Ihat - Nhat) # (untreated mort'y)/(untreated inc)
     ## CFR <- cfrz[maxidxnotna] #last
-    CFR <- mean(cfrz,na.rm=TRUE) #mean
-    if(is.na(CFR) | CFR<0 | CFR >1){
-      warning('Untreated CFR implied by data provided is pathological!\nUsing CFR = 0.5')
-      CFR <- 0.5                       #safety
+    CFR <- mean(cfrz, na.rm = TRUE) # mean
+
+    if (is.na(CFR) | CFR < 0 | CFR > 1) {
+      warning("Untreated CFR implied by data provided is pathological!\nUsing CFR = 0.5")
+      CFR <- 0.5 # safety
     }
+
     ## calculate last CDR to carry fwd
     CDR <- Nhat[maxidxnotna] / Ihat[maxidxnotna]
-    if(is.na(CDR)  | CDR<0 | CDR >1 ){
-      warning('Untreated CDR implied by data provided is pathological!\nUsing CDR = 0.7')
-      CDR <- 0.7                       #safety
+    if (is.na(CDR) | CDR < 0 | CDR > 1) {
+      warning("Untreated CDR implied by data provided is pathological!\nUsing CDR = 0.7")
+      CDR <- 0.7 # safety
     }
+
     ## replace incidence forecasts with version using N/CDR
-    RI[,I.sd:=I.sd/I.mid]        #make proportion
-    RI[(maxidxnotna+1):nrow(RI),
-       c('I.mid'):=RN[(maxidxnotna+1):nrow(RI),list(N.mid/CDR)]] #CDR-based incidence
-    RI[,I.sd:=I.sd * I.mid]        #make not a proportion
-    RI[(maxidxnotna+1):nrow(RI),
-       c('I.lo','I.hi'):=list(pmax(0,I.mid - 1.96 * I.sd),I.mid + 1.96 * I.sd)]
+    RI[, I.sd := I.sd / I.mid] # make proportion
+    RI[
+      (maxidxnotna + 1):nrow(RI),
+      c("I.mid") := RN[(maxidxnotna + 1):nrow(RI), list(N.mid / CDR)]
+    ] # CDR-based incidence
+    RI[, I.sd := I.sd * I.mid] # make not a proportion
+    RI[
+      (maxidxnotna + 1):nrow(RI),
+      c("I.lo", "I.hi") := list(pmax(0, I.mid - 1.96 * I.sd), I.mid + 1.96 * I.sd)
+    ]
+
     ## fraction HIV+
-    if('Hhat' %in% names(arguments) & 'sEH' %in% names(arguments)){ #HIV
-      cat('Running HIV component...\n')
-      suppressWarnings({RH <- noisyex(year,arguments$Hhat,arguments$sEH,nrep,runs=FALSE,2)})
-      names(RH) <- c('year','H.mid','H.sd','H.lo','H.hi')
-    } else { #HIV not given
-      RH <- data.table::data.table(year=year,
-                                   H.mid=rep(0.0,length(year)),
-                                   H.sd=rep(0.0,length(year)),
-                                   H.lo=rep(0.0,length(year)),
-                                   H.hi=rep(0.0,length(year)))
+    if ("Hhat" %in% names(arguments) & "sEH" %in% names(arguments)) { # HIV
+      cat("Running HIV component...\n")
+      suppressWarnings({
+        RH <- noisyex(year, arguments$Hhat, arguments$sEH, nrep, runs = FALSE, 2)
+      })
+      names(RH) <- c("year", "H.mid", "H.sd", "H.lo", "H.hi")
+    } else { # HIV not given
+      RH <- data.table::data.table(
+        year = year,
+        H.mid = rep(0.0, length(year)),
+        H.sd = rep(0.0, length(year)),
+        H.lo = rep(0.0, length(year)),
+        H.hi = rep(0.0, length(year))
+      )
     }
+
     ## prevalence NOTE not currently implemented
-    RP <- data.table::data.table(year=year,
-                                 P.mid=rep(NA_real_,length(year)),
-                                 P.sd=rep(NA_real_,length(year)),
-                                 P.lo=rep(NA_real_,length(year)),
-                                 P.hi=rep(NA_real_,length(year)))
+    RP <- data.table::data.table(
+      year = year,
+      P.mid = rep(NA_real_, length(year)),
+      P.sd = rep(NA_real_, length(year)),
+      P.lo = rep(NA_real_, length(year)),
+      P.hi = rep(NA_real_, length(year))
+    )
+
     ## merge and output
-    ANS1 <- merge(RI,RN,by='year')
-    ANS2 <- merge(RM,RP,by='year')
-    ANS <- merge(ANS1,ANS2,by='year')
+    ANS1 <- merge(RI, RN, by = "year")
+    ANS2 <- merge(RM, RP, by = "year")
+    ANS <- merge(ANS1, ANS2, by = "year")
     if ("Hhat" %in% names(arguments) & "sEH" %in% names(arguments)) ANS <- merge(ANS, RH, by = "year")
+
     ## safety to avoid new CDR>1
     bad <- which(CDR * HRd > 1)
     if (length(bad) > 1) HRd[bad] <- 1.0 / CDR # to give new CDR==1==max
     ## HR interventions NOTE the notif one will have limited validity
-    ANS[,c('I.mid','I.lo','I.hi'):=list(I.mid*HRi,I.lo*HRi,I.hi*HRi)] #OK
-    ANS[,c('N.mid','N.lo','N.hi'):=list(N.mid*HRi*HRd,N.lo*HRi*HRd,N.hi*HRi*HRd)] #approx
+    ANS[, c("I.mid", "I.lo", "I.hi") := list(I.mid * HRi, I.lo * HRi, I.hi * HRi)] # OK
+    ANS[
+      ,
+      c("N.mid", "N.lo", "N.hi") := list(N.mid * HRi * HRd, N.lo * HRi * HRd, N.hi * HRi * HRd)
+    ] # approx
     ## ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid/HRd,M.lo/HRd,M.hi/HRd)]             #approx
     ## mortality approximation: Untreated' = (Incidence' - Notifications') x CFR
-    pb <- maxidxnotna+1; pe <- nrow(ANS)                           #begin/end of projection
-    ANS[pb:pe,M.mid:=(I.mid-N.mid)*CFR]                            #mean
-    ANS[,M.sdx3.92:=sqrt((I.lo-I.hi)^2+(N.lo-N.hi)^2)*CFR]         #uncertainty measure
-    ANS[pb:pe,c('M.lo','M.hi'):=list(pmax(0,M.mid-M.sdx3.92/2),M.mid+M.sdx3.92/2)]
-    ANS[,M.sdx3.92:=NULL]
+    pb <- maxidxnotna + 1
+    pe <- nrow(ANS) # begin/end of projection
+    ANS[pb:pe, M.mid := (I.mid - N.mid) * CFR] # mean
+    ANS[, M.sdx3.92 := sqrt((I.lo - I.hi)^2 + (N.lo - N.hi)^2) * CFR] # uncertainty measure
+    ANS[pb:pe, c("M.lo", "M.hi") := list(pmax(0, M.mid - M.sdx3.92 / 2), M.mid + M.sdx3.92 / 2)]
+    ANS[, M.sdx3.92 := NULL]
     ## add treated mortality back
-    ANS[,c('M.mid','M.lo','M.hi'):=list(M.mid + TXf*N.mid,
-                                        M.lo + TXf*N.mid,M.hi + TXf*N.mid)]
+    ANS[, c("M.mid", "M.lo", "M.hi") := list(
+      M.mid + TXf * N.mid,
+      M.lo + TXf * N.mid, M.hi + TXf * N.mid
+    )]
+
     ## NOTE no extra uncertainty in line above
     ## computing this using duration assumption -
-    ANS[,P.mid:=N.mid*tx.mid + (I.mid-N.mid)*ut.mid]
+    ANS[, P.mid := N.mid * tx.mid + (I.mid - N.mid) * ut.mid]
+
     ## P.sd^2 = (N.mid*tx.m)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2) +
     ##     ((I.mid-N.mid)*ut.m)^2 * ( (ut.sd/ut.m)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
-    ANS[,P.sd:=sqrt(
-    (N.mid*tx.mid)^2 * ((N.sd/N.mid)^2+(tx.sd/tx.mid)^2)+
-    ((I.mid-N.mid)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (I.sd^2+N.sd^2)/(I.mid-N.mid)^2 )
+    ANS[, P.sd := sqrt(
+      (N.mid * tx.mid)^2 * ((N.sd / N.mid)^2 + (tx.sd / tx.mid)^2) +
+        ((I.mid - N.mid) * ut.mid)^2 * ((ut.sd / ut.mid)^2 + (I.sd^2 + N.sd^2) / (I.mid - N.mid)^2)
     )]
-    ANS[,c('P.lo','P.hi'):=list(pmax(0,P.mid-1.96*P.sd),P.mid+1.96*P.sd)]
-  } else { #============== SSM versions ==============
-    nahead <- which.max(!is.na(rev(Ihat)))-1 #assume NAs at back
-    lastd <- length(Ihat)-nahead
+
+    ANS[, c("P.lo", "P.hi") := list(pmax(0, P.mid - 1.96 * P.sd), P.mid + 1.96 * P.sd)]
+
+  } else {
+    ## ============== SSM versions ==============
+    nahead <- which.max(!is.na(rev(Ihat))) - 1 # assume NAs at back
+    lastd <- length(Ihat) - nahead
     ## take off deaths on treatment
     Mhat <- Mhat - TXf * Nhat
-    if(any(Mhat[1:lastd]<0)) stop('Implied deaths on TB treatment exceed total TB mortality!')
-    logIRR <- log(HRi[(lastd+1):length(HRd)])      #IRR on incidence
-    logIRRdelta <- log(HRd[(lastd+1):length(HRd)]) #detection
-    if(all(is.na(Phat))){
+    if (any(Mhat[1:lastd] < 0)) stop("Implied deaths on TB treatment exceed total TB mortality!")
+    logIRR <- log(HRi[(lastd + 1):length(HRd)]) # IRR on incidence
+    logIRRdelta <- log(HRd[(lastd + 1):length(HRd)]) # detection
+
+    if (all(is.na(Phat))) {
       ## make guess for P
-      Phat <- Nhat * tx.mid + (Ihat-Nhat) * ut.mid
+      Phat <- Nhat * tx.mid + (Ihat - Nhat) * ut.mid
       ## ## smooth this:
       ## tosmooth <- data.frame(index=1:length(Phat),Phat=Phat)
       ## smoothmod <- loess(Phat ~ index, data=tosmooth, span = 0.5) #NOTE 0.5 can be varied
       ## Phat <- predict(smoothmod) #use smoothed version
       ## calculate uncertainty
-      sEP <- (Nhat*tx.mid)^2 * ((sEN/Nhat)^2+(tx.sd/tx.mid)^2)+
-        ((Ihat-Nhat)*ut.mid)^2 * ( (ut.sd/ut.mid)^2 + (sEI^2+sEN^2)/(Ihat-Nhat)^2 )
+      sEP <- (Nhat * tx.mid)^2 * ((sEN / Nhat)^2 + (tx.sd / tx.mid)^2) +
+        ((Ihat - Nhat) * ut.mid)^2 * ((ut.sd / ut.mid)^2 + (sEI^2 + sEN^2) / (Ihat - Nhat)^2)
       sEP <- sqrt(sEP)
       ## Phat <- Ihat; sEP <- 2*sEI
-      if(verbose) cat('No Phat supplied: making a guess from Ihat!\n')
+      if (verbose) cat("No Phat supplied: making a guess from Ihat!\n")
     }
 
-    didx <- 1:lastd #data range
-    if(verbose) cat('...nahead=',nahead,'\n')
-    if(verbose) cat('...lastd=',lastd,'\n')
-    if(verbose) cat('...passing off to Cprojections:\n')
 
-    ANS <- Cprojections(year=year[didx],
-                        Ihat=Ihat[didx],sEI=sEI[didx],
-                        Nhat=Nhat[didx],sEN=sEN[didx],
-                        Mhat=Mhat[didx],sEM=sEM[didx],
-                        Phat=Phat[didx],sEP=sEP[didx],
-                        nahead=nahead,
-                        logIRR=logIRR,
-                        logIRRdelta=logIRRdelta,
-                        returntype=output,
-                        modeltype=modeltype,
-                        verbose=verbose,
-                        ...
-                        )
-    if(verbose) cat('...Cprojections returned OK...\n')
+    didx <- 1:lastd # data range
+    if (verbose) cat("...nahead=", nahead, "\n")
+    if (verbose) cat("...lastd=", lastd, "\n")
+    if (verbose) cat("...passing off to Cprojections:\n")
 
+    ANS <- Cprojections(
+      year = year[didx],
+      Ihat = Ihat[didx], sEI = sEI[didx],
+      Nhat = Nhat[didx], sEN = sEN[didx],
+      Mhat = Mhat[didx], sEM = sEM[didx],
+      Phat = Phat[didx], sEP = sEP[didx],
+      nahead = nahead,
+      logIRR = logIRR,
+      logIRRdelta = logIRRdelta,
+      returntype = output,
+      modeltype = modeltype,
+      verbose = verbose,
+      ...
+    )
 
+    if (verbose) cat("...Cprojections returned OK...\n")
   }
-  if(modeltype!='failsafe' & !returninternalfit){
-    ANS <- data.table::dcast(ANS[variable %in% c('Incidence','Notifications',
-                                                 'Prevalence','Deaths','time')],
-                             time ~ variable,value.var=c('mid','lo','hi'))
+
+  if (modeltype != "failsafe" & !returninternalfit) {
+    ANS <- data.table::dcast(
+      ANS[variable %in% c(
+        "Incidence", "Notifications",
+        "Prevalence", "Deaths", "time"
+      )],
+      time ~ variable,
+      value.var = c("mid", "lo", "hi")
+    )
+
     ## safe renaming
     n <- names(ANS)
-    names(ANS)[n=='time'] <- 'year'
-    names(ANS)[n=='mid_Incidence'] <- 'I.mid'
-    names(ANS)[n=='lo_Incidence'] <- 'I.lo'
-    names(ANS)[n=='hi_Incidence'] <- 'I.hi'
-    names(ANS)[n=='mid_Notifications'] <- 'N.mid'
-    names(ANS)[n=='lo_Notifications'] <- 'N.lo'
-    names(ANS)[n=='hi_Notifications'] <- 'N.hi'
-    names(ANS)[n=='mid_Deaths'] <- 'M.mid'
-    names(ANS)[n=='lo_Deaths'] <- 'M.lo'
-    names(ANS)[n=='hi_Deaths'] <- 'M.hi'
-    names(ANS)[n=='mid_Prevalence'] <- 'P.mid'
-    names(ANS)[n=='lo_Prevalence'] <- 'P.lo'
-    names(ANS)[n=='hi_Prevalence'] <- 'P.hi'
+    names(ANS)[n == "time"] <- "year"
+    names(ANS)[n == "mid_Incidence"] <- "I.mid"
+    names(ANS)[n == "lo_Incidence"] <- "I.lo"
+    names(ANS)[n == "hi_Incidence"] <- "I.hi"
+    names(ANS)[n == "mid_Notifications"] <- "N.mid"
+    names(ANS)[n == "lo_Notifications"] <- "N.lo"
+    names(ANS)[n == "hi_Notifications"] <- "N.hi"
+    names(ANS)[n == "mid_Deaths"] <- "M.mid"
+    names(ANS)[n == "lo_Deaths"] <- "M.lo"
+    names(ANS)[n == "hi_Deaths"] <- "M.hi"
+    names(ANS)[n == "mid_Prevalence"] <- "P.mid"
+    names(ANS)[n == "lo_Prevalence"] <- "P.lo"
+    names(ANS)[n == "hi_Prevalence"] <- "P.hi"
     ANS$year <- year[ANS$year]
-    ANS <- ANS[!is.na(year)] #removes 1 ahead if 'fit'
+    ANS <- ANS[!is.na(year)] # removes 1 ahead if 'fit'
+
     ## creating SDs
-    ANS[,c('I.sd','N.sd','M.sd','P.sd'):=
-           list((I.hi-I.lo)/3.92,
-           (N.hi-N.lo)/3.92,
-           (M.hi-M.lo)/3.92,
-           (P.hi-P.lo)/3.92)] #NOTE were N TODO
+    ANS[, c("I.sd", "N.sd", "M.sd", "P.sd") :=
+      list(
+        (I.hi - I.lo) / 3.92,
+        (N.hi - N.lo) / 3.92,
+        (M.hi - M.lo) / 3.92,
+        (P.hi - P.lo) / 3.92
+      )] # NOTE were N TODO
+
     ## adding back on deaths off treatment
-    ANS[,M.mid:=M.mid + TXf * N.mid]
-    ANS[,M.sd:=sqrt(M.sd^2 + TXf^2 * N.sd^2)]
-    ANS[,M.hi:=M.mid + 1.96*M.sd]
-    ANS[,M.lo:=pmax(M.mid - 1.96*M.sd,0)]
+    ANS[, M.mid := M.mid + TXf * N.mid]
+    ANS[, M.sd := sqrt(M.sd^2 + TXf^2 * N.sd^2)]
+    ANS[, M.hi := M.mid + 1.96 * M.sd]
+    ANS[, M.lo := pmax(M.mid - 1.96 * M.sd, 0)]
+
     ## reorder
-    setcolorder(ANS,neworder = c("year",
-                                 "I.mid", "I.sd",  "I.lo", "I.hi",
-                                 "N.mid", "N.sd",  "N.lo", "N.hi",
-                                 "M.mid", "M.sd",  "M.lo", "M.hi",
-                                 "P.mid", "P.sd",  "P.lo", "P.hi" ))
+    setcolorder(ANS, neworder = c(
+      "year",
+      "I.mid", "I.sd", "I.lo", "I.hi",
+      "N.mid", "N.sd", "N.lo", "N.hi",
+      "M.mid", "M.sd", "M.lo", "M.hi",
+      "P.mid", "P.sd", "P.lo", "P.hi"
+    ))
   }
-  if(modeltype!='failsafe' & returninternalfit)
+
+  if (modeltype != "failsafe" & returninternalfit) {
     warning("Note internal mortality excludes deaths on TB treatment!")
+  }
+
   ## output
   ANS
 }
+
 
 
 
@@ -492,73 +570,81 @@ projections <- function(year,
 ##' @import mathjaxr
 ##' @export
 Cprojections <- function(year,
-                        Ihat,sEI,
-                        Nhat,sEN,
-                        Mhat,sEM,
-                        Phat,sEP,
-                        logIRR,logIRRdelta,
+                        Ihat, sEI,
+                        Nhat, sEN,
+                        Mhat, sEM,
+                        Phat, sEP,
+                        logIRR, logIRRdelta,
                         ...,
-                        nahead=0,
-                        returntype='projection',
-                        modeltype='IP',
-                        verbose=FALSE
+                        nahead = 0,
+                        returntype = "projection",
+                        modeltype = "IP",
+                        verbose = FALSE
                         ){
 
 
   ## avoiding warnings:
   override <- variable <- value <- time <- NULL
   ## set up
-  if(nahead==0 & returntype=='futureonly') stop("Can't have nahead=0 and only return future!")
-  if(verbose) cat('Using Cprojections...\n')
-  arguments <- list(...)
-  list2env(arguments,envir = environment())                   #boost ... to this scope
+  if (nahead == 0 & returntype == "futureonly") stop("Can't have nahead=0 and only return future!")
+  if (verbose) cat("Using Cprojections...\n")
 
-  cat('...nahead = ',nahead,'...\n')
+  arguments <- list(...)
+  list2env(arguments, envir = environment()) # boost ... to this scope
+  cat("...nahead = ", nahead, "...\n")
 
   ## switch to fit if nahead==0
-  if(nahead==0 & returntype=='projection'){
-    returntype <- 'fit'
-    cat('...NB changing returntype to fit since nahead==0...\n')
+  if (nahead == 0 & returntype == "projection") {
+    returntype <- "fit"
+    cat("...NB changing returntype to fit since nahead==0...\n")
   }
 
   ## model choice safety
-  if(! (modeltype=='rwI' | substr(modeltype,1,2)=='IP') ){
-    wrn <- paste0('modeltype = ',modeltype,' is unknown! Using rwI\n')
+  if (!(modeltype == "rwI" | substr(modeltype, 1, 2) == "IP")) {
+    wrn <- paste0("modeltype = ", modeltype, " is unknown! Using rwI\n")
     warning(wrn)
-    modeltype <- 'rwI'
+    modeltype <- "rwI"
   }
 
   ## processing data
-  Yhat <- cbind(Ihat,Phat,Nhat,Mhat)
-  NoverI <- Nhat[1]/Ihat[1]
+  Yhat <- cbind(Ihat, Phat, Nhat, Mhat)
+  NoverI <- Nhat[1] / Ihat[1]
 
   ## transformations NOTE reconsider
   Yhat <- log(Yhat)
-  Vhat <- cbind( rep(1/10,nrow(Yhat)), #I
-                rep(1/3,nrow(Yhat)),  #P
-                rep(1/10,nrow(Yhat)),  #N
-                rep(1/10,nrow(Yhat)) ) #D
-  if('override' %in% names(arguments)){
-    if('Vhat' %in% names(override)){
-      if(override[['Vhat']]=='literal'){
-        Vhat <- cbind(sEI,sEP,sEN,sEM) #NOTE these are in logspace
-        if(verbose) cat('...** overriding Vhat **...\n')
+  Vhat <- cbind(
+    rep(1 / 10, nrow(Yhat)), # I
+    rep(1 / 3, nrow(Yhat)), # P
+    rep(1 / 10, nrow(Yhat)), # N
+    rep(1 / 10, nrow(Yhat))
+  ) # D
+
+  if ("override" %in% names(arguments)) {
+    if ("Vhat" %in% names(override)) {
+      if (override[["Vhat"]] == "literal") {
+        Vhat <- cbind(sEI, sEP, sEN, sEM) # NOTE these are in logspace
+        if (verbose) cat("...** overriding Vhat **...\n")
       }
     }
   }
 
   ## Initial states:
-  IS <- c(log(c(Ihat[1],Phat[1],Nhat[1],Mhat[1])),
-                 c(0.1,0.1,0.1,0.1))
-  if('override' %in% names(arguments)){
-    if('IS' %in% names(override)){
-      IS <- override[['IS']]
-      if(verbose) cat('...** overriding IS **...\n')
+  IS <- c(
+    log(c(Ihat[1], Phat[1], Nhat[1], Mhat[1])),
+    c(0.1, 0.1, 0.1, 0.1)
+  )
+
+  if ("override" %in% names(arguments)) {
+    if ("IS" %in% names(override)) {
+      IS <- override[["IS"]]
+      if (verbose) cat("...** overriding IS **...\n")
     }
   }
-  names(IS) <- c("mI0","mP0","mN0","mD0","sI0","sP0","sN0","sD0")
-  if(verbose) cat('...initial state: IS = \n')
-  if(verbose) print(IS)
+
+  names(IS) <- c("mI0", "mP0", "mN0", "mD0", "sI0", "sP0", "sN0", "sD0")
+
+  if (verbose) cat("...initial state: IS = \n")
+  if (verbose) print(IS)
 
   ## other prior parameters
   sdelta0 <- 0.5 #NOTE for rwI only prior width for detection rate
@@ -568,100 +654,114 @@ Cprojections <- function(year,
   spsi0 <- 0.3
 
   ## initial thetas
-  initial_theta <- c(logSI = -1,logsdelta=-1,logsomega=-1) #default rwI
-  initial_theta <- c(initial_theta,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS 
-  if('override' %in% names(arguments)){
-    if('initial_theta' %in% names(override)){
-      initial_theta <- override[['initial_theta']]
-      if(verbose) cat('...** overriding initial_theta **...\n')
+  initial_theta <- c(logSI = -1, logsdelta = -1, logsomega = -1) # default rwI
+  initial_theta <- c(initial_theta, c(logishft = 0, lognshft = 0, logmshft = 0)) # unknown IS
+
+  if ("override" %in% names(arguments)) {
+    if ("initial_theta" %in% names(override)) {
+      initial_theta <- override[["initial_theta"]]
+      if (verbose) cat("...** overriding initial_theta **...\n")
     }
   }
-  initial_theta_ip <- c(logSI = -1,logsdelta=-1,logsomega=-1,logphiP=-1,logitpr=-1) #IP
-  initial_theta_ip<- c(initial_theta_ip,c(logishft=0,lognshft=0,logmshft=0)) #unknown IS 
-  if('override' %in% names(arguments)){
-    if('initial_theta_ip' %in% names(override)){
-      initial_theta_ip <- override[['initial_theta_ip']]
-      if(verbose) cat('...** overriding initial_theta_ip **...\n')
+
+  initial_theta_ip <- c(logSI = -1, logsdelta = -1, logsomega = -1, logphiP = -1, logitpr = -1) # IP
+  initial_theta_ip <- c(initial_theta_ip, c(logishft = 0, lognshft = 0, logmshft = 0)) # unknown IS
+  if ("override" %in% names(arguments)) {
+    if ("initial_theta_ip" %in% names(override)) {
+      initial_theta_ip <- override[["initial_theta_ip"]]
+      if (verbose) cat("...** overriding initial_theta_ip **...\n")
     }
   }
-  known_params <- c(mI0 = (IS['mI0']),
-                    mP0 = (IS['mP0']),
-                    mN0 = (IS['mN0']),
-                    mD0 = (IS['mD0']),
-                    momega = momega0,
-                    mdelta = log(NoverI), #N/I as proxy for N/P
-                    mpsi = mpsi0,## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
-                    sI0 = (IS['sI0']), #NOTE
-                    sP0 = (IS['sP0']),
-                    sN0 = (IS['sN0']),
-                    sD0 = (IS['sD0']),
-                    somega = somega0,
-                    sdelta = sdelta0,
-                    spsi = spsi0)
-  if('override' %in% names(arguments)){
-    if('nathist' %in% names(override)){
-      for(nm in names(override[['nathist']])){ #loop over these
-        if(verbose) cat('...** overriding ',nm,' **...\n')
-        if(!nm %in% names(known_params)) stop('nathist override not found in known_params: probably not the behaviour you were looking for!')
-        known_params[nm] <- override[['nathist']][[nm]]
+
+  known_params <- c(
+    mI0 = (IS["mI0"]),
+    mP0 = (IS["mP0"]),
+    mN0 = (IS["mN0"]),
+    mD0 = (IS["mD0"]),
+    momega = momega0,
+    mdelta = log(NoverI), # N/I as proxy for N/P
+    mpsi = mpsi0, ## log(tmp$Mhat[1]/tmp$Ihat[1]) + 1.1, mortality lit
+    sI0 = (IS["sI0"]), # NOTE
+    sP0 = (IS["sP0"]),
+    sN0 = (IS["sN0"]),
+    sD0 = (IS["sD0"]),
+    somega = somega0,
+    sdelta = sdelta0,
+    spsi = spsi0
+  )
+
+  if ("override" %in% names(arguments)) {
+    if ("nathist" %in% names(override)) {
+      for (nm in names(override[["nathist"]])) { # loop over these
+        if (verbose) cat("...** overriding ", nm, " **...\n")
+        if (!nm %in% names(known_params)) {
+          stop("nathist override not found in known_params: probably not the behaviour you were looking for!")
+        }
+        known_params[nm] <- override[["nathist"]][[nm]]
       }
     }
   }
-  known_tv_params <- cbind(Vhat,matrix(0,nrow=nrow(Vhat),ncol=2))
+  known_tv_params <- cbind(Vhat, matrix(0, nrow = nrow(Vhat), ncol = 2))
 
   ## for predictions
-  if(missing(logIRR)) logIRR <- rep(0,nahead)
-  if(missing(logIRRdelta)) logIRRdelta <- rep(0,nahead)
+  if (missing(logIRR)) logIRR <- rep(0, nahead)
+  if (missing(logIRRdelta)) logIRRdelta <- rep(0, nahead)
 
-  future_known_tv_params <- known_tv_params[rep(nrow(Vhat),nahead),]
-  if(verbose) cat('logIRR = ',logIRR,'\n')
-  if(verbose) cat('logIRRdelta = ',logIRRdelta,'\n')
+  future_known_tv_params <- known_tv_params[rep(nrow(Vhat), nahead), ]
+
+  if (verbose) cat("logIRR = ", logIRR, "\n")
+  if (verbose) cat("logIRRdelta = ", logIRRdelta, "\n")
   ## NOTE interventions
-  future_known_tv_params[,5] <- logIRR
-  future_known_tv_params[,6] <- logIRRdelta
+  future_known_tv_params[, 5] <- logIRR
+  future_known_tv_params[, 6] <- logIRRdelta
 
-  SNMZ <- c('logIncidence','logPrevalence','logNotifications','logDeaths',
-               'logomega','logdelta','psi')
+  SNMZ <- c(
+    "logIncidence", "logPrevalence", "logNotifications", "logDeaths",
+    "logomega", "logdelta", "psi"
+  )
 
 
   ## tests:
-  state <- c(log(100), log(100), log(100), log(10),
-             log(3),log(1),logit(0.5))
+  state <- c(
+    log(100), log(100), log(100), log(10),
+    log(3), log(1), logit(0.5)
+  )
 
-  if(verbose) cat('Creating models...\n')
+  if (verbose) cat("Creating models...\n")
+
   ## --- create models
   ## model pointers
   pntrsrw <- create_xptrs() #create pointers for rwI model
   pntrsip <- create_xptrs_ip_all() #create pointers for IP model
 
-  if(verbose){
-    cat('Testing pointers:\n')
-    cat('rwI...\n')
-    (ta1 <- a1_fn(initial_theta,known_params))
+  if (verbose) {
+    cat("Testing pointers:\n")
+    cat("rwI...\n")
+    (ta1 <- a1_fn(initial_theta, known_params))
     print(c(ta1))
-    (tP1 <- P1_fn(initial_theta,known_params))
+    (tP1 <- P1_fn(initial_theta, known_params))
     print(c(diag(tP1)))
-    tmp <- rep(0,7)
-    for(i in 1:7) tmp[i] <- exparz(ta1[i],sqrt(tP1[i]))$mn
+    tmp <- rep(0, 7)
+    for (i in 1:7) tmp[i] <- exparz(ta1[i], sqrt(tP1[i]))$mn
     print(tmp)
-    (tH <- H_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tR <- R_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tZ <- Z_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tdZ <- Z_gn(1,state,initial_theta,known_params,known_tv_params))
-    (tT <- T_fn(1,state,initial_theta,known_params,known_tv_params))
-    (tdT <- T_gn(1,state,initial_theta,known_params,known_tv_params))
+    (tH <- H_fn(1, state, initial_theta, known_params, known_tv_params))
+    (tR <- R_fn(1, state, initial_theta, known_params, known_tv_params))
+    (tZ <- Z_fn(1, state, initial_theta, known_params, known_tv_params))
+    (tdZ <- Z_gn(1, state, initial_theta, known_params, known_tv_params))
+    (tT <- T_fn(1, state, initial_theta, known_params, known_tv_params))
+    (tdT <- T_gn(1, state, initial_theta, known_params, known_tv_params))
     (log_prior_pdf(initial_theta))
-    cat('IP...\n')
+    cat("IP...\n")
     print(names(pntrsip))
-    (ta1 <- a1_fn_ip(initial_theta_ip,known_params))
-    (tP1 <- P1_fn_ip(initial_theta_ip,known_params))
-    (tH <- H_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tR <- R_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tZ <- Z_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tdZ <- Z_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tT <- T_fn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    (tdT <- T_gn_ip(1,state,initial_theta_ip,known_params,known_tv_params))
-    cat('--- IP prior variants ---\n')
+    (ta1 <- a1_fn_ip(initial_theta_ip, known_params))
+    (tP1 <- P1_fn_ip(initial_theta_ip, known_params))
+    (tH <- H_fn_ip(1, state, initial_theta_ip, known_params, known_tv_params))
+    (tR <- R_fn_ip(1, state, initial_theta_ip, known_params, known_tv_params))
+    (tZ <- Z_fn_ip(1, state, initial_theta_ip, known_params, known_tv_params))
+    (tdZ <- Z_gn_ip(1, state, initial_theta_ip, known_params, known_tv_params))
+    (tT <- T_fn_ip(1, state, initial_theta_ip, known_params, known_tv_params))
+    (tdT <- T_gn_ip(1, state, initial_theta_ip, known_params, known_tv_params))
+    cat("--- IP prior variants ---\n")
     print(log_prior_pdf_ip4(initial_theta_ip))
     print(log_prior_pdf_ip3(initial_theta_ip))
     print(log_prior_pdf_ip2(initial_theta_ip))
@@ -671,132 +771,149 @@ Cprojections <- function(year,
     print(log_prior_pdf_ipn3(initial_theta_ip))
     print(log_prior_pdf_ipn2(initial_theta_ip))
     print(log_prior_pdf_ipn1(initial_theta_ip))
-    cat('...done.\n')
+    cat("...done.\n")
   }
 
   ## rwI
-  modelrwi <- bssm::ssm_nlg(y = Yhat,
-                            a1=pntrsrw$a1_fn, P1 = pntrsrw$P1_fn,
-                            Z = pntrsrw$Z_fn, H = pntrsrw$H_fn, T = pntrsrw$T_fn, R = pntrsrw$R_fn,
-                            Z_gn = pntrsrw$Z_gn, T_gn = pntrsrw$T_gn,
-                            theta = initial_theta, log_prior_pdf = pntrsrw$log_prior_pdf,
-                            known_params = known_params, known_tv_params = known_tv_params,
-                            n_states = 7, n_etas = 4,
-                            state_names = SNMZ)
+  modelrwi <- bssm::ssm_nlg(
+    y = Yhat,
+    a1 = pntrsrw$a1_fn, P1 = pntrsrw$P1_fn,
+    Z = pntrsrw$Z_fn, H = pntrsrw$H_fn, T = pntrsrw$T_fn, R = pntrsrw$R_fn,
+    Z_gn = pntrsrw$Z_gn, T_gn = pntrsrw$T_gn,
+    theta = initial_theta, log_prior_pdf = pntrsrw$log_prior_pdf,
+    known_params = known_params, known_tv_params = known_tv_params,
+    n_states = 7, n_etas = 4,
+    state_names = SNMZ
+  )
 
 
   ## IP
   logIPprior <- pntrsip$log_prior_pdf_ip0 #safety for rwI
-  if(modeltype=='IP1'){
+  if (modeltype == "IP1") {
     logIPprior <- pntrsip$log_prior_pdf_ip1
-  } else if(modeltype=='IP2'){
+  } else if (modeltype == "IP2") {
     logIPprior <- pntrsip$log_prior_pdf_ip2
-  } else if(modeltype=='IP3'){
+  } else if (modeltype == "IP3") {
     logIPprior <- pntrsip$log_prior_pdf_ip3
-  } else if(modeltype=='IP4'){
+  } else if (modeltype == "IP4") {
     logIPprior <- pntrsip$log_prior_pdf_ip4
-  } else if(modeltype=='IPn1'){
+  } else if (modeltype == "IPn1") {
     logIPprior <- pntrsip$log_prior_pdf_ipn1
-  } else if(modeltype=='IPn2'){
+  } else if (modeltype == "IPn2") {
     logIPprior <- pntrsip$log_prior_pdf_ipn2
-  } else if(modeltype=='IPn3'){
+  } else if (modeltype == "IPn3") {
     logIPprior <- pntrsip$log_prior_pdf_ipn2
-  } else if(modeltype=='IPn4'){
+  } else if (modeltype == "IPn4") {
     logIPprior <- pntrsip$log_prior_pdf_ipn4
-  } else if(modeltype=='IP0' | modeltype=='IP'){
+  } else if (modeltype == "IP0" | modeltype == "IP") {
     logIPprior <- pntrsip$log_prior_pdf_ip0
   }
 
-  modelip <- bssm::ssm_nlg(y = Yhat,
-                           a1=pntrsip$a1_fn_ip, P1 = pntrsip$P1_fn_ip, #NOTE
-                           Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
-                           T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
-                           Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
-                           theta = initial_theta_ip, log_prior_pdf = logIPprior,
-                           known_params = known_params, known_tv_params = known_tv_params,
-                           n_states = 7, n_etas = 4,
-                           state_names = SNMZ)
+  modelip <- bssm::ssm_nlg(
+    y = Yhat,
+    a1 = pntrsip$a1_fn_ip, P1 = pntrsip$P1_fn_ip, # NOTE
+    Z = pntrsip$Z_fn_ip, H = pntrsip$H_fn_ip,
+    T = pntrsip$T_fn_ip, R = pntrsip$R_fn_ip,
+    Z_gn = pntrsip$Z_gn_ip, T_gn = pntrsip$T_gn_ip,
+    theta = initial_theta_ip, log_prior_pdf = logIPprior,
+    known_params = known_params, known_tv_params = known_tv_params,
+    n_states = 7, n_etas = 4,
+    state_names = SNMZ
+  )
 
   ## choose model to use
-
-  if(modeltype=='rwI'){
-    cat('Using model type: ', modeltype,'\n')
+  if (modeltype == "rwI") {
+    cat("Using model type: ", modeltype, "\n")
     model <- modelrwi
-  } else if(substr(modeltype,1,2)=='IP'){
-    cat('Using model type: ', modeltype,'\n')
+  } else if (substr(modeltype, 1, 2) == "IP") {
+    cat("Using model type: ", modeltype, "\n")
     model <- modelip
   }
 
-  if(verbose) cat('Using return type: ',returntype,'\n')
-  if(verbose) cat('Starting inference...\n')
+  if (verbose) cat("Using return type: ", returntype, "\n")
+  if (verbose) cat("Starting inference...\n")
 
   ## inference
-  mcmc.type <- 'ekf'              #change inference type
-  ITER <- 6000 ; BURN <- 1000 
-  mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN,mcmc_type = "ekf")
+  mcmc.type <- "ekf" # change inference type
+  ITER <- 6000
+  BURN <- 1000
+  mcmc_fit <- bssm::run_mcmc(model, iter = ITER, burnin = BURN, mcmc_type = "ekf")
 
-  if(verbose) cat('Postprocessing inference...\n')
-  cat('calculating fit summary...\n')
+  if (verbose) cat("Postprocessing inference...\n")
+  cat("calculating fit summary...\n")
   outsf <- mcmcsmry(mcmc_fit) #summarizer to mid/lo/hi
 
   ## predict
-  if(nahead>1){
-    if(verbose) cat('Making predictions...\n')
-    if(verbose) cat('nahead: ',nahead,' > 1 ...\n')
+  if (nahead > 1) {
+    if (verbose) cat("Making predictions...\n")
+    if (verbose) cat("nahead: ", nahead, " > 1 ...\n")
     future_model <- model
-    future_model$y <- ts(matrix(NA, ncol=4,nrow=nahead),
-                         start = tsp(model$y)[2] + deltat(model$y),
-                         frequency = frequency(model$y))
+    future_model$y <- ts(matrix(NA, ncol = 4, nrow = nahead),
+      start = tsp(model$y)[2] + deltat(model$y),
+      frequency = frequency(model$y)
+    )
     future_model$known_tv_params <- future_known_tv_params
-    pred <- predict(mcmc_fit, model = future_model, type = "state", 
-                    nsim = 1000)
+    pred <- predict(mcmc_fit,
+      model = future_model, type = "state",
+      nsim = 1000
+    )
     mcmc_fit <- pred
 
-    if(verbose) cat('Postprocessing projection results...\n')
-    outs <- mcmcsmry(mcmc_fit) #summarizer to mid/lo/hi
+    if (verbose) cat("Postprocessing projection results...\n")
+    outs <- mcmcsmry(mcmc_fit) # summarizer to mid/lo/hi
   }
 
-  if(returntype=='futureonly'){
+  if (returntype == "futureonly") {
     ## No action needed
-    cat('future only, no summary...\n')
+    cat("future only, no summary...\n")
     return(outs)
   }
-  if(returntype=='fit'){
-    cat('returning fit summary...\n')
+
+  if (returntype == "fit") {
+    cat("returning fit summary...\n")
     return(outsf)
     ## outs <- rbind(outsf,outs) #combine with past fit
   }
-  if(returntype=='projectionfit'){
-    cat('returning fit summary...\n')
-    outsb <- rbind(outsf[time<max(time)],outs) #combine with past fit
+
+  if (returntype == "projectionfit") {
+    cat("returning fit summary...\n")
+    outsb <- rbind(outsf[time < max(time)], outs) # combine with past fit
     return(outsb)
   }
-  if(returntype=='projection'){
-    cat('projection fit summary...\n')
+
+  if (returntype == "projection") {
+    cat("projection fit summary...\n")
     ## create same format input data
-    inputs.m <- data.table::data.table(Incidence=as.numeric(Ihat),
-                                       Notifications=as.numeric(Nhat),
-                                       Deaths=as.numeric(Mhat),
-                                       Prevalence=as.numeric(Phat),
-                                       time=1:length(year))
-    inputs.h <- data.table::data.table(Incidence=as.numeric(Ihat+1.96*sEI),
-                                       Notifications=as.numeric(Nhat+1.96*sEN),
-                                       Deaths=as.numeric(Mhat+1.96*sEM),
-                                       Prevalence=as.numeric(Phat+1.96*sEP),
-                                       time=1:length(year))
-    inputs.l <- data.table::data.table(Incidence=as.numeric(pmax(0,Ihat-1.96*sEI)),
-                                       Notifications=as.numeric(pmax(0,Nhat-1.96*sEN)),
-                                       Deaths=as.numeric(pmax(0,Mhat-1.96*sEM)),
-                                       Prevalence=as.numeric(pmax(0,Phat-1.96*sEP)),
-                                       time=1:length(year))
+    inputs.m <- data.table::data.table(
+      Incidence = as.numeric(Ihat),
+      Notifications = as.numeric(Nhat),
+      Deaths = as.numeric(Mhat),
+      Prevalence = as.numeric(Phat),
+      time = 1:length(year)
+    )
+    inputs.h <- data.table::data.table(
+      Incidence = as.numeric(Ihat + 1.96 * sEI),
+      Notifications = as.numeric(Nhat + 1.96 * sEN),
+      Deaths = as.numeric(Mhat + 1.96 * sEM),
+      Prevalence = as.numeric(Phat + 1.96 * sEP),
+      time = 1:length(year)
+    )
+    inputs.l <- data.table::data.table(
+      Incidence = as.numeric(pmax(0, Ihat - 1.96 * sEI)),
+      Notifications = as.numeric(pmax(0, Nhat - 1.96 * sEN)),
+      Deaths = as.numeric(pmax(0, Mhat - 1.96 * sEM)),
+      Prevalence = as.numeric(pmax(0, Phat - 1.96 * sEP)),
+      time = 1:length(year)
+    )
     ## prefer outputting fit since use case will rarely have prevalence supplied
     prev.data.missing <- TRUE ## replace Prevalence with estimates
     if (prev.data.missing) {
       if (verbose) cat("NOTE ignoring any prevalence data supplied!\n")
       inputs.m$Prevalence[1:nrow(inputs.m)] <- outsf[
-        variable=='Prevalence' &
-        time<=nrow(inputs.m),
-        mid]
+        variable == "Prevalence" &
+          time <= nrow(inputs.m),
+        mid
+      ]
       inputs.l$Prevalence[1:nrow(inputs.m)] <- outsf[
         variable == "Prevalence" &
           time <= nrow(inputs.m),
@@ -809,16 +926,18 @@ Cprojections <- function(year,
       ]
     }
 
-    inputs.m <- melt(inputs.m,id.vars = c('time'))
-    names(inputs.m)[3] <- 'mid'
-    inputs.l <- melt(inputs.l,id.vars = c('time'))
-    names(inputs.l)[3] <- 'lo'
-    inputs.h <- melt(inputs.h,id.vars = c('time'))
-    names(inputs.h)[3] <- 'hi'
-    inputs.a <- merge(inputs.m,inputs.l,by=c('time','variable'))
-    inputs.a <- merge(inputs.a,inputs.h,by=c('time','variable'))
+    inputs.m <- melt(inputs.m, id.vars = c("time"))
+    names(inputs.m)[3] <- "mid"
+    inputs.l <- melt(inputs.l, id.vars = c("time"))
+    names(inputs.l)[3] <- "lo"
+    inputs.h <- melt(inputs.h, id.vars = c("time"))
+    names(inputs.h)[3] <- "hi"
+    inputs.a <- merge(inputs.m, inputs.l, by = c("time", "variable"))
+    inputs.a <- merge(inputs.a, inputs.h, by = c("time", "variable"))
     ## ouput
-    outs <- rbind(inputs.a,outs)
+    outs <- rbind(inputs.a, outs)
     return(outs)
   }
+
 }
+
